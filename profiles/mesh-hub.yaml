@@ -1,0 +1,78 @@
+name: mesh-hub
+description: "Community mesh hub — full services, high-capacity relay"
+
+node:
+  profile: mesh-hub
+
+network:
+  ap_interface: auto
+  mesh_interface: auto
+  uplink_interface: auto
+  hotspot_subnet: "192.168.45.0/24"
+  hotspot_ip: "192.168.45.1"
+
+hotspot:
+  enabled: true
+  ssid: "AetherHub"
+  channel: 6
+  band: "2.4GHz"
+  password: ""
+  captive_portal: true
+  hidden: false
+  max_clients: 100
+
+batman_adv:
+  enabled: true
+  gw_mode: "server"
+  gw_bandwidth: "100mbit/100mbit"
+
+reticulum:
+  enabled: true
+  interfaces:
+    - type: AutoInterface
+      enabled: true
+    - type: TCPServerInterface
+      enabled: true
+      port: 4242
+    - type: RNodeInterface
+      enabled: auto
+      port: auto
+      frequency: 915000000
+      bandwidth: 125000
+      sf: 7
+
+lxmf:
+  enabled: true
+  propagation_node: true
+  announce_interval: 900
+
+nomadnet:
+  enabled: true
+
+nftables:
+  enabled: true
+  policy: "field"
+
+modules:
+  - nftables
+  - batman-adv
+  - hostapd
+  - dnsmasq
+  - reticulum
+  - lxmf
+  - nomadnet
+  - rnode
+  - gps
+  - aprs
+  - meshtastic
+  - sdr
+  - captive-portal
+  - avahi
+  - emergency
+  - ota
+  - syncthing
+  - mumble
+  - monitoring
+  - matrix
+  - gitea
+  - dashboard

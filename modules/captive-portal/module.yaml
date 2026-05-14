@@ -1,0 +1,13 @@
+name: captive-portal
+version: "system"
+description: "Captive portal — redirects new hotspot clients to Aetherium landing page"
+type: native
+service: aetherium-captive-portal
+binary: nginx
+requires_hardware: []
+resource_budget:
+  cpu: "0.02"
+  memory: "10M"
+  disk: "5M"
+profiles_default_on: [hotspot, mesh-hub]
+notes: "Works in conjunction with dnsmasq address=/#/ redirect. Serves node info and mesh join instructions."

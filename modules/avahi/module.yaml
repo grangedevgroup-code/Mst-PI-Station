@@ -1,0 +1,13 @@
+name: avahi
+version: "system"
+description: "Avahi — mDNS/DNS-SD for automatic service discovery across mesh and hotspot"
+type: native
+service: avahi-daemon
+binary: avahi-daemon
+requires_hardware: []
+resource_budget:
+  cpu: "0.02"
+  memory: "5M"
+  disk: "2M"
+profiles_default_on: [relay, hotspot, mesh-hub, field-node, lte-gateway, local-services]
+notes: "Announces all Aetherium services as .local mDNS records. Zero-conf discovery on mesh."

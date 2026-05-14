@@ -1,0 +1,13 @@
+name: matrix
+version: "system"
+description: "Matrix Conduit — lightweight Matrix homeserver for encrypted mesh messaging (~50MB RAM)"
+type: docker
+service: aetherium-matrix
+binary: docker
+requires_hardware: []
+resource_budget:
+  cpu: "0.10"
+  memory: "60M"
+  disk: "100M"
+profiles_default_on: [mesh-hub]
+notes: "Server name = aetherium.local. Connect with any Matrix client (Element, FluffyChat). Port 6167."

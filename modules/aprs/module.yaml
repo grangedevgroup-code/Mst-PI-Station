@@ -1,0 +1,13 @@
+name: aprs
+version: "system"
+description: "APRS — Automatic Packet Reporting System via Direwolf TNC (ham radio / SDR)"
+type: native
+service: aetherium-direwolf
+binary: direwolf
+requires_hardware: []
+resource_budget:
+  cpu: "0.15"
+  memory: "30M"
+  disk: "20M"
+profiles_default_on: [relay, mesh-hub]
+notes: "Requires amateur radio license for transmit. Receive-only is license-free."

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Aetherium{% endblock %} — {{ node_name }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen font-mono">
+
+<!-- Sidebar -->
+<nav class="fixed left-0 top-0 h-full w-56 bg-gray-900 border-r border-gray-800 flex flex-col z-50">
+    <div class="p-4 border-b border-gray-800">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-sm font-bold">Æ</div>
+            <div>
+                <div class="text-sm font-bold text-cyan-400">Aetherium</div>
+                <div class="text-xs text-gray-500 truncate max-w-[120px]">{{ node_name }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 p-3 space-y-1">
+        <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">
+            <span class="icon">⬡</span> Overview
+        </a>
+        <a href="/network" class="nav-link {% if request.url.path == '/network' %}active{% endif %}">
+            <span class="icon">⟳</span> Network
+        </a>
+        <a href="/services" class="nav-link {% if request.url.path == '/services' %}active{% endif %}">
+            <span class="icon">⚙</span> Services
+        </a>
+        <a href="/config" class="nav-link {% if request.url.path == '/config' %}active{% endif %}">
+            <span class="icon">≡</span> Config
+        </a>
+
+        <div class="pt-3 mt-3 border-t border-gray-800 text-xs text-gray-600 uppercase tracking-wider px-2">
+            Quick Links
+        </div>
+        <a href="http://aetherium.local:8384" target="_blank" class="nav-link external">
+            <span class="icon">⇄</span> Syncthing
+        </a>
+        <a href="http://aetherium.local:8888" target="_blank" class="nav-link external">
+            <span class="icon">📖</span> Kiwix
+        </a>
+        <a href="http://aetherium.local:3000" target="_blank" class="nav-link external">
+            <span class="icon">📊</span> Grafana
+        </a>
+    </div>
+
+    <!-- Status indicator -->
+    <div class="p-3 border-t border-gray-800">
+        <div id="health-dot" class="flex items-center gap-2 text-xs">
+            <span class="w-2 h-2 rounded-full {% if healthy %}bg-green-500{% else %}bg-red-500{% endif %} animate-pulse"></span>
+            <span class="{% if healthy %}text-green-400{% else %}text-red-400{% endif %}">
+                {% if healthy %}healthy{% else %}degraded{% endif %}
+            </span>
+        </div>
+    </div>
+</nav>
+
+<!-- Main content -->
+<main class="ml-56 p-6">
+    {% block content %}{% endblock %}
+</main>
+
+<script src="/static/js/app.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

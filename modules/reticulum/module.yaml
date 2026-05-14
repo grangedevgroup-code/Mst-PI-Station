@@ -1,0 +1,12 @@
+name: reticulum
+version: "1.2.5"
+description: "Reticulum Network Stack — encrypted, resilient mesh transport"
+type: native
+service: reticulum
+binary: rnsd
+requires_hardware: []
+resource_budget:
+  cpu: "0.2"
+  memory: "64M"
+  disk: "100M"
+profiles_default_on: [relay, field-node, hotspot, mesh-hub, lte-gateway, emergency, solar-relay, local-services]

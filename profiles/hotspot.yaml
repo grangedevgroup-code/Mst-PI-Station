@@ -1,0 +1,54 @@
+name: hotspot
+description: "Wi-Fi hotspot with captive portal and local services"
+
+node:
+  profile: hotspot
+
+network:
+  ap_interface: auto
+  mesh_interface: auto
+  uplink_interface: auto
+  hotspot_subnet: "192.168.44.0/24"
+  hotspot_ip: "192.168.44.1"
+
+hotspot:
+  enabled: true
+  ssid: "AetherNet"
+  channel: 6
+  band: "2.4GHz"
+  password: ""
+  captive_portal: true
+  hidden: false
+  max_clients: 50
+  dhcp_lease_time: "2h"
+
+batman_adv:
+  enabled: false            # pure AP mode, no mesh needed
+
+reticulum:
+  enabled: true
+  interfaces:
+    - type: AutoInterface
+      enabled: true
+    - type: TCPServerInterface
+      enabled: true
+      port: 4242
+
+lxmf:
+  enabled: true
+  propagation_node: false
+
+nftables:
+  enabled: true
+  policy: "open"            # more permissive for hotspot
+
+modules:
+  - nftables
+  - hostapd
+  - dnsmasq
+  - reticulum
+  - lxmf
+  - captive-portal
+  - avahi
+  - syncthing
+  - dashboard

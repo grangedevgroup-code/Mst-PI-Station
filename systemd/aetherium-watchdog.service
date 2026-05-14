@@ -1,0 +1,12 @@
+[Unit]
+Description=Aetherium Watchdog — Service Recovery
+After=aetherium-agent.service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c 'while true; do /opt/aetherium/venv/bin/python3 /opt/aetherium/core/agent.py --watchdog-only; sleep 30; done'
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

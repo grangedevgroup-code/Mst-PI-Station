@@ -1,0 +1,13 @@
+name: power
+version: "system"
+description: "Power management — CPU governor, HDMI/LED/BT disable, thermal throttling for solar/battery"
+type: native
+service: aetherium-power
+binary: cpufreq-set
+requires_hardware: []
+resource_budget:
+  cpu: "0.01"
+  memory: "2M"
+  disk: "1M"
+profiles_default_on: [solar-relay, field-node]
+notes: "Applies powersave governor and disables unused hardware peripherals to extend battery life."

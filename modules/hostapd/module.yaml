@@ -1,0 +1,12 @@
+name: hostapd
+version: "system"
+description: "hostapd — IEEE 802.11 AP and authentication daemon"
+type: native
+service: aetherium-hostapd
+binary: hostapd
+requires_hardware: [wifi]
+resource_budget:
+  cpu: "0.05"
+  memory: "12M"
+  disk: "5M"
+profiles_default_on: [relay, field-node, hotspot, mesh-hub, lte-gateway, emergency, local-services]

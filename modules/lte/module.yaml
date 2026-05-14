@@ -1,0 +1,12 @@
+name: lte
+version: "system"
+description: "LTE/4G uplink via USB modem — ModemManager + NetworkManager"
+type: native
+service: ModemManager
+binary: mmcli
+requires_hardware: [lte]
+resource_budget:
+  cpu: "0.05"
+  memory: "30M"
+  disk: "10M"
+profiles_default_on: [lte-gateway]

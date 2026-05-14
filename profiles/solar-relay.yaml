@@ -1,0 +1,59 @@
+name: solar-relay
+description: "Low-power solar relay — optimized for minimal power consumption"
+
+node:
+  profile: solar-relay
+
+network:
+  ap_interface: auto
+  mesh_interface: auto
+  uplink_interface: auto
+  hotspot_subnet: "192.168.47.0/24"
+  hotspot_ip: "192.168.47.1"
+
+hotspot:
+  enabled: false            # disabled to save power; enable if needed
+
+batman_adv:
+  enabled: true
+  gw_mode: "off"
+
+reticulum:
+  enabled: true
+  interfaces:
+    - type: AutoInterface
+      enabled: true
+    - type: RNodeInterface
+      enabled: auto
+      port: auto
+      frequency: 915000000
+      bandwidth: 125000
+      sf: 10
+      tx_power: 14          # Conservative TX power
+
+lxmf:
+  enabled: true
+  propagation_node: true
+  announce_interval: 3600   # announce less frequently to save power
+
+power:
+  mode: "powersave"
+  wifi_power_save: true
+  cpu_governor: "powersave"
+  disable_hdmi: true
+  disable_leds: true
+  disable_bluetooth: true
+
+nftables:
+  enabled: true
+  policy: "field"
+
+modules:
+  - nftables
+  - batman-adv
+  - reticulum
+  - lxmf
+  - rnode
+  - avahi
+  - power
+  - dashboard

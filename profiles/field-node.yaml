@@ -1,0 +1,68 @@
+name: field-node
+description: "Portable field communications node — battery-friendly, mobile"
+
+node:
+  profile: field-node
+
+network:
+  ap_interface: auto
+  mesh_interface: auto
+  uplink_interface: auto
+  hotspot_subnet: "192.168.43.0/24"
+  hotspot_ip: "192.168.43.1"
+
+hotspot:
+  enabled: true
+  ssid: "AetherField"
+  channel: 1
+  band: "2.4GHz"
+  password: ""
+  captive_portal: true
+  hidden: false
+
+batman_adv:
+  enabled: true
+  gw_mode: "client"
+
+reticulum:
+  enabled: true
+  interfaces:
+    - type: AutoInterface
+      enabled: true
+    - type: RNodeInterface
+      enabled: auto
+      port: auto
+      frequency: 915000000
+      bandwidth: 125000
+      sf: 9                  # Higher SF = longer range, lower data rate
+      coding_rate: 5
+      tx_power: 14           # Lower power for field use / battery
+
+lxmf:
+  enabled: true
+  propagation_node: false   # field nodes don't store/forward
+
+nftables:
+  enabled: true
+  policy: "field"
+
+power:
+  mode: "balanced"           # balanced|performance|powersave
+  disable_hdmi: true
+  disable_usb_power: false
+
+modules:
+  - nftables
+  - batman-adv
+  - hostapd
+  - dnsmasq
+  - reticulum
+  - lxmf
+  - rnode
+  - gps
+  - aprs
+  - captive-portal
+  - avahi
+  - emergency
+  - power
+  - dashboard

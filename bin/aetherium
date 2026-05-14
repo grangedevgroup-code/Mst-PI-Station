@@ -1,0 +1,720 @@
+#!/usr/bin/env python3
+"""
+Aetherium CLI
+Resilient mesh communications stack for field deployments
+"""
+
+import sys
+import os
+
+# Ensure we can import from the aetherium package
+AETHERIUM_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, AETHERIUM_DIR)
+
+import click
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.text import Text
+from rich import box
+import json
+import subprocess
+import yaml
+import time
+from pathlib import Path
+
+from core.config import Config
+from core.hardware import Hardware
+from core.modules import ModuleManager
+from core.profiles import ProfileManager
+
+console = Console()
+
+AETHERIUM_VERSION = "0.1.0"
+CONFIG_DIR = Path("/etc/aetherium")
+INSTALL_DIR = Path(AETHERIUM_DIR)
+STATUS_FILE = Path("/var/run/aetherium/status.json")
+
+BANNER = """[bold cyan]
+    ╔══════════════════════════════════════╗
+    ║  ▄▀█ █▀▀ ▀█▀ █░█ █▀▀ █▀█ █ █░█ █▀▄▀█  ║
+    ║  █▀█ ██▄  █  █▀█ ██▄ █▀▄ █ █▄█ █░▀░█  ║
+    ║    Resilient Mesh Communications    ║
+    ╚══════════════════════════════════════╝[/bold cyan]
+    [dim]v{version}[/dim]
+"""
+
+
+def require_root(ctx, param, value):
+    if os.geteuid() != 0:
+        console.print("[red][✗] This command requires root. Run with sudo.[/red]")
+        sys.exit(1)
+    return value
+
+
+@click.group()
+@click.version_option(AETHERIUM_VERSION, "--version", "-v")
+@click.pass_context
+def cli(ctx):
+    """Aetherium — Resilient Mesh Communications Stack
+
+    Deploy and manage communications nodes for field, emergency,
+    and off-grid networking.
+
+    \b
+    Quick start:
+      aetherium deploy relay
+      aetherium deploy field-node
+      aetherium deploy hotspot
+      aetherium status
+    """
+    ctx.ensure_object(dict)
+    ctx.obj["config"] = Config()
+    ctx.obj["hardware"] = Hardware()
+
+
+# ── deploy ────────────────────────────────────────────────────────────────────
+
+@cli.command()
+@click.argument("profile", type=click.Choice([
+    "relay", "field-node", "hotspot", "mesh-hub",
+    "lte-gateway", "emergency", "solar-relay", "local-services"
+], case_sensitive=False))
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+@click.option("--skip-modules", "-s", multiple=True, help="Skip specific modules")
+@click.option("--force", "-f", is_flag=True, help="Force re-deploy even if already deployed")
+@click.pass_context
+def deploy(ctx, profile, dry_run, skip_modules, force):
+    """Deploy a node profile.
+
+    \b
+    Profiles:
+      relay         Persistent mesh relay (fixed installation)
+      field-node    Portable field communications node
+      hotspot       Wi-Fi hotspot with captive portal
+      mesh-hub      Full community mesh hub
+      lte-gateway   LTE/4G uplink gateway
+      emergency     Minimal emergency comms node
+      solar-relay   Low-power solar relay
+      local-services  File sharing and offline content
+    """
+    if os.geteuid() != 0:
+        console.print("[red][✗] Deploy requires root. Run with sudo.[/red]")
+        sys.exit(1)
+
+    cfg = ctx.obj["config"]
+    hw = ctx.obj["hardware"]
+    pm = ProfileManager(INSTALL_DIR, cfg, hw)
+    mm = ModuleManager(INSTALL_DIR, cfg, hw)
+
+    console.print(BANNER.format(version=AETHERIUM_VERSION))
+    console.print(f"[bold]Deploying profile:[/bold] [cyan]{profile}[/cyan]")
+    console.print(f"[bold]Hardware:[/bold]  {hw.model} / {hw.arch}")
+    console.print("")
+
+    profile_def = pm.load(profile)
+    if not profile_def:
+        console.print(f"[red]Profile '{profile}' not found.[/red]")
+        sys.exit(1)
+
+    # Save current profile
+    cfg.set("node.profile", profile)
+    cfg.save()
+
+    if dry_run:
+        console.print("[yellow][DRY RUN] The following actions would be taken:[/yellow]")
+
+    with console.status(f"[bold green]Deploying {profile}...") as status:
+        for module_name in profile_def.get("modules", []):
+            if module_name in skip_modules:
+                console.print(f"  [yellow]SKIP[/yellow] {module_name}")
+                continue
+
+            status.update(f"[bold green]Configuring {module_name}...")
+
+            if dry_run:
+                console.print(f"  [blue]WOULD[/blue] install + configure {module_name}")
+                continue
+
+            success, msg = mm.deploy_module(module_name, profile_def)
+            if success:
+                console.print(f"  [green]✓[/green] {module_name}")
+            else:
+                console.print(f"  [red]✗[/red] {module_name}: {msg}")
+
+    if not dry_run:
+        console.print("")
+        console.print("[bold green]✓ Deployment complete![/bold green]")
+        console.print("")
+        local_ip = _get_local_ip()
+        console.print(f"  Dashboard: [link]http://{local_ip}:8080[/link]")
+        console.print(f"  Status:    aetherium status")
+        console.print(f"  Logs:      aetherium logs")
+
+
+# ── status ────────────────────────────────────────────────────────────────────
+
+@cli.command()
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+@click.option("--watch", "-w", is_flag=True, help="Watch status continuously")
+@click.pass_context
+def status(ctx, output_json, watch):
+    """Show node status and service health."""
+    cfg = ctx.obj["config"]
+    hw = ctx.obj["hardware"]
+    mm = ModuleManager(INSTALL_DIR, cfg, hw)
+
+    def show_status():
+        status_data = _collect_status(cfg, hw, mm)
+
+        if output_json:
+            console.print(json.dumps(status_data, indent=2))
+            return
+
+        # Header
+        node_name = cfg.get("node.name", "aetherium-node")
+        profile = cfg.get("node.profile", "unconfigured")
+        uptime = _get_uptime()
+
+        console.print("")
+        console.print(Panel(
+            f"[bold cyan]{node_name}[/bold cyan]\n"
+            f"Profile: [yellow]{profile}[/yellow]  |  "
+            f"Uptime: {uptime}  |  "
+            f"[{'green' if status_data['healthy'] else 'red'}]"
+            f"{'● healthy' if status_data['healthy'] else '● degraded'}[/]",
+            title="[bold]Aetherium Node Status[/bold]",
+            border_style="cyan"
+        ))
+
+        # Services table
+        svc_table = Table(box=box.ROUNDED, show_header=True, header_style="bold")
+        svc_table.add_column("Module", style="cyan", min_width=16)
+        svc_table.add_column("Status", min_width=10)
+        svc_table.add_column("Detail", style="dim")
+
+        for svc in status_data["services"]:
+            st = svc["status"]
+            color = {"active": "green", "inactive": "dim", "failed": "red",
+                     "activating": "yellow"}.get(st, "white")
+            svc_table.add_row(
+                svc["name"],
+                f"[{color}]{'●' if st=='active' else '○'} {st}[/{color}]",
+                svc.get("detail", "")
+            )
+
+        console.print(svc_table)
+
+        # Network table
+        net_table = Table(box=box.ROUNDED, show_header=True, header_style="bold",
+                          title="[bold]Network Interfaces[/bold]")
+        net_table.add_column("Interface", style="cyan")
+        net_table.add_column("State")
+        net_table.add_column("IP Address")
+        net_table.add_column("Mode", style="dim")
+
+        for iface in status_data["interfaces"]:
+            state_color = "green" if iface["state"] == "UP" else "dim"
+            net_table.add_row(
+                iface["name"],
+                f"[{state_color}]{iface['state']}[/{state_color}]",
+                iface.get("ip", ""),
+                iface.get("mode", "")
+            )
+
+        console.print(net_table)
+
+        # Mesh peers
+        peers = status_data.get("mesh_peers", [])
+        if peers:
+            console.print(f"\n  [bold]Mesh peers:[/bold] {len(peers)}")
+            for p in peers[:5]:
+                console.print(f"    [dim]{p}[/dim]")
+
+    if watch:
+        import shutil
+        while True:
+            os.system("clear")
+            show_status()
+            time.sleep(5)
+    else:
+        show_status()
+
+
+# ── module ────────────────────────────────────────────────────────────────────
+
+@cli.group()
+def module():
+    """Manage Aetherium modules (enable, disable, list, update)."""
+    pass
+
+
+@module.command("list")
+@click.pass_context
+def module_list(ctx):
+    """List all available modules and their status."""
+    cfg = ctx.obj["config"]
+    hw = ctx.obj["hardware"]
+    mm = ModuleManager(INSTALL_DIR, cfg, hw)
+
+    table = Table(box=box.ROUNDED, title="[bold]Aetherium Modules[/bold]",
+                  show_header=True, header_style="bold")
+    table.add_column("Module", style="cyan", min_width=18)
+    table.add_column("Type", style="dim")
+    table.add_column("Status")
+    table.add_column("RAM", style="dim")
+    table.add_column("Description")
+
+    for mod in mm.list_modules():
+        st = mod["status"]
+        color = {"active": "green", "installed": "blue",
+                 "available": "dim", "failed": "red"}.get(st, "white")
+        table.add_row(
+            mod["name"],
+            mod.get("type", "native"),
+            f"[{color}]{st}[/{color}]",
+            mod.get("resource_budget", {}).get("memory", "—"),
+            mod.get("description", "")
+        )
+
+    console.print(table)
+
+
+@module.command("enable")
+@click.argument("name")
+@click.pass_context
+def module_enable(ctx, name):
+    """Enable and start a module."""
+    if os.geteuid() != 0:
+        console.print("[red][✗] Requires root.[/red]")
+        sys.exit(1)
+
+    cfg = ctx.obj["config"]
+    hw = ctx.obj["hardware"]
+    mm = ModuleManager(INSTALL_DIR, cfg, hw)
+
+    with console.status(f"Enabling [cyan]{name}[/cyan]..."):
+        success, msg = mm.enable(name)
+
+    if success:
+        console.print(f"[green]✓[/green] {name} enabled: {msg}")
+    else:
+        console.print(f"[red]✗[/red] {name}: {msg}")
+        sys.exit(1)
+
+
+@module.command("disable")
+@click.argument("name")
+@click.pass_context
+def module_disable(ctx, name):
+    """Disable and stop a module."""
+    if os.geteuid() != 0:
+        console.print("[red][✗] Requires root.[/red]")
+        sys.exit(1)
+
+    cfg = ctx.obj["config"]
+    hw = ctx.obj["hardware"]
+    mm = ModuleManager(INSTALL_DIR, cfg, hw)
+
+    with console.status(f"Disabling [cyan]{name}[/cyan]..."):
+        success, msg = mm.disable(name)
+
+    if success:
+        console.print(f"[green]✓[/green] {name} disabled")
+    else:
+        console.print(f"[red]✗[/red] {name}: {msg}")
+
+
+@module.command("update")
+@click.argument("name", required=False)
+@click.pass_context
+def module_update(ctx, name):
+    """Update a module or all modules."""
+    if os.geteuid() != 0:
+        console.print("[red][✗] Requires root.[/red]")
+        sys.exit(1)
+
+    cfg = ctx.obj["config"]
+    hw = ctx.obj["hardware"]
+    mm = ModuleManager(INSTALL_DIR, cfg, hw)
+    modules_to_update = [name] if name else [m["name"] for m in mm.list_modules()
+                                              if m["status"] in ("active", "installed")]
+
+    for mod_name in modules_to_update:
+        with console.status(f"Updating [cyan]{mod_name}[/cyan]..."):
+            success, msg = mm.update(mod_name)
+        if success:
+            console.print(f"[green]✓[/green] {mod_name}: {msg}")
+        else:
+            console.print(f"[yellow]⚠[/yellow] {mod_name}: {msg}")
+
+
+# ── config ────────────────────────────────────────────────────────────────────
+
+@cli.group()
+def config():
+    """Manage Aetherium configuration."""
+    pass
+
+
+@config.command("show")
+@click.pass_context
+def config_show(ctx):
+    """Show current configuration."""
+    cfg = ctx.obj["config"]
+    console.print_json(json.dumps(cfg.data, indent=2))
+
+
+@config.command("set")
+@click.argument("key")
+@click.argument("value")
+@click.pass_context
+def config_set(ctx, key, value):
+    """Set a configuration value. Use dot notation: node.name mynode"""
+    if os.geteuid() != 0:
+        console.print("[red][✗] Requires root.[/red]")
+        sys.exit(1)
+    cfg = ctx.obj["config"]
+    cfg.set(key, value)
+    cfg.save()
+    console.print(f"[green]✓[/green] {key} = {value}")
+
+
+@config.command("get")
+@click.argument("key")
+@click.pass_context
+def config_get(ctx, key):
+    """Get a configuration value."""
+    cfg = ctx.obj["config"]
+    val = cfg.get(key)
+    if val is not None:
+        console.print(val)
+    else:
+        console.print(f"[dim]Key '{key}' not found[/dim]")
+        sys.exit(1)
+
+
+@config.command("edit")
+def config_edit():
+    """Open configuration in editor."""
+    editor = os.environ.get("EDITOR", "nano")
+    cfg_file = CONFIG_DIR / "aetherium.yaml"
+    os.execvp(editor, [editor, str(cfg_file)])
+
+
+@config.command("validate")
+@click.pass_context
+def config_validate(ctx):
+    """Validate current configuration."""
+    cfg = ctx.obj["config"]
+    errors = cfg.validate()
+    if errors:
+        for e in errors:
+            console.print(f"[red]✗[/red] {e}")
+        sys.exit(1)
+    else:
+        console.print("[green]✓[/green] Configuration is valid")
+
+
+# ── hardware ─────────────────────────────────────────────────────────────────
+
+@cli.group()
+def hardware():
+    """Hardware detection and information."""
+    pass
+
+
+@hardware.command("detect")
+def hardware_detect():
+    """Re-run hardware detection."""
+    if os.geteuid() != 0:
+        console.print("[red][✗] Requires root.[/red]")
+        sys.exit(1)
+    script = INSTALL_DIR / "installer" / "detect-hardware.sh"
+    subprocess.run(["bash", "-c", f"source {script} && detect_hardware"], check=False)
+    console.print("[green]✓[/green] Hardware detection complete")
+    with open("/etc/aetherium/hardware.yaml") as f:
+        console.print(f.read())
+
+
+@hardware.command("show")
+@click.pass_context
+def hardware_show(ctx):
+    """Show detected hardware information."""
+    hw = ctx.obj["hardware"]
+    hw_file = Path("/etc/aetherium/hardware.yaml")
+
+    if hw_file.exists():
+        with open(hw_file) as f:
+            data = yaml.safe_load(f)
+
+        table = Table(box=box.SIMPLE, show_header=False)
+        table.add_column("Key", style="cyan", min_width=20)
+        table.add_column("Value")
+
+        table.add_row("Model", data.get("model", "unknown"))
+        table.add_row("Revision", data.get("revision", "—"))
+        table.add_row("Architecture", data.get("arch", "unknown"))
+        table.add_row("CPU Cores", str(data.get("cpu_cores", "?")))
+        table.add_row("RAM", f"{data.get('ram_mb', '?')} MB")
+        table.add_row("Storage", f"{data.get('storage_gb', '?')} GB")
+        table.add_row("Wi-Fi interfaces", str(data.get("interfaces", {}).get("wifi", [])))
+        table.add_row("Ethernet", str(data.get("interfaces", {}).get("ethernet", [])))
+        table.add_row("RNode devices", str(data.get("devices", {}).get("rnode", [])))
+        table.add_row("LTE modems", str(data.get("devices", {}).get("lte_modem", [])))
+
+        console.print(table)
+    else:
+        console.print("[yellow]Hardware detection has not been run.[/yellow]")
+        console.print("Run: sudo aetherium hardware detect")
+
+
+# ── logs ─────────────────────────────────────────────────────────────────────
+
+@cli.command()
+@click.argument("service", required=False)
+@click.option("--lines", "-n", default=50, help="Number of lines to show")
+@click.option("--follow", "-f", is_flag=True, help="Follow log output")
+def logs(service, lines, follow):
+    """View service logs.
+
+    \b
+    Examples:
+      aetherium logs
+      aetherium logs reticulum
+      aetherium logs reticulum --follow
+    """
+    if service:
+        unit = f"aetherium-{service}" if not service.startswith("aetherium") else service
+        cmd = ["journalctl", "-u", unit, f"-n{lines}"]
+        if follow:
+            cmd.append("-f")
+        subprocess.run(cmd)
+    else:
+        cmd = ["journalctl", "-t", "aetherium", f"-n{lines}"]
+        if follow:
+            cmd.append("-f")
+        subprocess.run(cmd)
+
+
+# ── update ────────────────────────────────────────────────────────────────────
+
+@cli.command()
+@click.option("--check", is_flag=True, help="Check for updates without installing")
+def update(check):
+    """Update Aetherium to the latest version."""
+    if not check and os.geteuid() != 0:
+        console.print("[red][✗] Requires root.[/red]")
+        sys.exit(1)
+
+    console.print("[cyan]Checking for updates...[/cyan]")
+    result = subprocess.run(
+        ["git", "fetch", "--dry-run" if check else ""],
+        cwd=str(INSTALL_DIR), capture_output=True, text=True
+    )
+
+    if check:
+        behind = subprocess.run(
+            ["git", "rev-list", "--count", "HEAD..origin/main"],
+            cwd=str(INSTALL_DIR), capture_output=True, text=True
+        )
+        count = behind.stdout.strip()
+        if count and int(count) > 0:
+            console.print(f"[yellow]{count} update(s) available.[/yellow] Run: sudo aetherium update")
+        else:
+            console.print("[green]✓[/green] Aetherium is up to date")
+    else:
+        subprocess.run(["git", "pull", "--ff-only"], cwd=str(INSTALL_DIR))
+        console.print("[green]✓[/green] Update complete. Run 'sudo aetherium deploy' to apply.")
+
+
+# ── fleet ─────────────────────────────────────────────────────────────────────
+
+@cli.group()
+def fleet():
+    """Fleet management — discover and manage mesh peers."""
+    pass
+
+
+@fleet.command("list")
+@click.pass_context
+def fleet_list(ctx):
+    """List discovered mesh peers."""
+    peers_file = Path("/var/lib/aetherium/peers.json")
+    if not peers_file.exists():
+        console.print("[dim]No peers discovered yet. Deploy relay or field-node profile first.[/dim]")
+        return
+
+    with open(peers_file) as f:
+        peers = json.load(f)
+
+    table = Table(box=box.ROUNDED, title="[bold]Mesh Peers[/bold]", show_header=True)
+    table.add_column("Node", style="cyan")
+    table.add_column("Profile")
+    table.add_column("Last seen", style="dim")
+    table.add_column("IP")
+    table.add_column("Transport", style="dim")
+
+    for peer in peers:
+        last_seen = peer.get("last_seen", "?")
+        table.add_row(
+            peer.get("name", "unknown"),
+            peer.get("profile", "?"),
+            last_seen,
+            peer.get("ip", ""),
+            peer.get("transport", ""),
+        )
+
+    console.print(table)
+
+
+# ── Emergency ────────────────────────────────────────────────────────────────
+
+@cli.group()
+def emergency():
+    """Emergency alert system — broadcast SOS messages to all mesh peers."""
+    pass
+
+
+@emergency.command("send")
+@click.argument("message", nargs=-1, required=True)
+@click.option("--retransmit", "-r", default=3, show_default=True,
+              help="Number of retransmit rounds")
+@click.option("--interval", "-i", default=30, show_default=True,
+              help="Seconds between retransmits")
+def emergency_send(message, retransmit, interval):
+    """Broadcast an emergency alert across the mesh."""
+    msg = " ".join(message)
+    console.print(f"[bold red]⚠ EMERGENCY BROADCAST[/bold red]")
+    console.print(f"[red]Message:[/red] {msg}")
+    console.print(f"[dim]Retransmitting {retransmit}× every {interval}s...[/dim]")
+
+    broadcast_script = INSTALL_DIR / "modules" / "emergency" / "broadcast.py"
+    venv_python = INSTALL_DIR / "venv" / "bin" / "python3"
+    python_bin = str(venv_python) if venv_python.exists() else "python3"
+
+    try:
+        subprocess.run(
+            [python_bin, str(broadcast_script),
+             "--retransmit", str(retransmit),
+             "--interval", str(interval),
+             msg],
+            env={**os.environ, "AETHERIUM_DIR": str(INSTALL_DIR)},
+            check=True,
+        )
+    except FileNotFoundError:
+        console.print("[red]Emergency module not installed. Deploy a profile first.[/red]")
+    except subprocess.CalledProcessError as e:
+        console.print(f"[red]Broadcast failed: {e}[/red]")
+
+
+@emergency.command("log")
+@click.option("--lines", "-n", default=20, show_default=True)
+def emergency_log(lines):
+    """Show recent emergency alerts received by this node."""
+    log_path = Path("/var/log/aetherium/emergency/alerts.log")
+    if not log_path.exists():
+        console.print("[dim]No alerts received.[/dim]")
+        return
+    alerts = log_path.read_text().splitlines()[-lines:]
+    for line in alerts:
+        try:
+            entry = json.loads(line)
+            console.print(f"[bold red]{entry['ts']}[/bold red] {entry.get('alert', line)}")
+        except json.JSONDecodeError:
+            console.print(line)
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _collect_status(cfg, hw, mm):
+    status = {"healthy": True, "services": [], "interfaces": [], "mesh_peers": []}
+
+    for mod in mm.list_modules():
+        if mod["status"] in ("active", "installed", "failed"):
+            svc_status = mm.get_service_status(mod["name"])
+            status["services"].append({
+                "name": mod["name"],
+                "status": svc_status,
+                "detail": ""
+            })
+            if svc_status == "failed":
+                status["healthy"] = False
+
+    try:
+        result = subprocess.run(
+            ["ip", "-j", "addr", "show"],
+            capture_output=True, text=True, timeout=5
+        )
+        ifaces = json.loads(result.stdout)
+        for iface in ifaces:
+            name = iface.get("ifname", "")
+            if name in ("lo",):
+                continue
+            state = "UP" if "UP" in iface.get("flags", []) else "DOWN"
+            addr = ""
+            for a in iface.get("addr_info", []):
+                if a.get("family") == "inet":
+                    addr = f"{a['local']}/{a['prefixlen']}"
+                    break
+            status["interfaces"].append({
+                "name": name,
+                "state": state,
+                "ip": addr,
+                "mode": _get_iface_mode(name)
+            })
+    except Exception:
+        pass
+
+    try:
+        result = subprocess.run(
+            ["batctl", "n"], capture_output=True, text=True, timeout=3
+        )
+        if result.returncode == 0:
+            lines = result.stdout.strip().split("\n")[2:]
+            status["mesh_peers"] = [l.split()[0] for l in lines if l.strip()]
+    except Exception:
+        pass
+
+    return status
+
+
+def _get_iface_mode(name):
+    try:
+        r = subprocess.run(["iw", "dev", name, "info"],
+                           capture_output=True, text=True, timeout=3)
+        for line in r.stdout.split("\n"):
+            if "type" in line:
+                return line.strip().replace("type ", "")
+    except Exception:
+        pass
+    return ""
+
+
+def _get_local_ip():
+    try:
+        result = subprocess.run(
+            ["ip", "route", "get", "8.8.8.8"],
+            capture_output=True, text=True, timeout=3
+        )
+        for part in result.stdout.split():
+            if part == "src":
+                return result.stdout.split()[result.stdout.split().index("src") + 1]
+    except Exception:
+        pass
+    return "localhost"
+
+
+def _get_uptime():
+    try:
+        with open("/proc/uptime") as f:
+            secs = float(f.read().split()[0])
+        h, rem = divmod(int(secs), 3600)
+        m = rem // 60
+        return f"{h}h {m}m"
+    except Exception:
+        return "?"
+
+
+if __name__ == "__main__":
+    cli()

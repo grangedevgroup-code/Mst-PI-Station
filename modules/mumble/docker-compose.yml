@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  mumble:
+    image: mumblevoip/mumble-server:latest
+    container_name: aetherium-mumble
+    environment:
+      - MUMBLE_CONFIG_welcometext=Welcome to Aetherium Mesh Voice
+      - MUMBLE_CONFIG_allowhtml=false
+      - MUMBLE_CONFIG_bandwidth=72000
+      - MUMBLE_CONFIG_users=50
+      - MUMBLE_CONFIG_serverpassword=
+    volumes:
+      - /var/lib/aetherium/mumble:/data
+    ports:
+      - "64738:64738/tcp"
+      - "64738:64738/udp"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 50M
+    logging:
+      driver: journald
+      options:
+        tag: aetherium-mumble

@@ -1,0 +1,13 @@
+name: ota
+version: "system"
+description: "OTA updates — distributes Aetherium updates across mesh via Syncthing file sync"
+type: native
+service: aetherium-ota
+binary: python3
+requires_hardware: []
+resource_budget:
+  cpu: "0.02"
+  memory: "10M"
+  disk: "50M"
+profiles_default_on: [relay, mesh-hub]
+notes: "Checks Syncthing share for new update bundles. Applies after cryptographic signature verification."

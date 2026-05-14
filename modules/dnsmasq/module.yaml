@@ -1,0 +1,13 @@
+name: dnsmasq
+version: "system"
+description: "dnsmasq — DHCP and DNS server for the hotspot"
+type: native
+service: dnsmasq
+binary: dnsmasq
+requires_hardware: []
+depends: [hostapd]
+resource_budget:
+  cpu: "0.02"
+  memory: "8M"
+  disk: "2M"
+profiles_default_on: [relay, field-node, hotspot, mesh-hub, lte-gateway, emergency, local-services]

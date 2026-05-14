@@ -1,0 +1,12 @@
+name: nftables
+version: "system"
+description: "nftables — packet filtering, NAT, and firewall"
+type: native
+service: nftables
+binary: nft
+requires_hardware: []
+resource_budget:
+  cpu: "0.01"
+  memory: "4M"
+  disk: "2M"
+profiles_default_on: [relay, field-node, hotspot, mesh-hub, lte-gateway, emergency, solar-relay, local-services]

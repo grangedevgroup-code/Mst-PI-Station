@@ -1,0 +1,13 @@
+name: sdr
+version: "system"
+description: "Software-Defined Radio — rtl-sdr (USB dongle), rtl_433 (IoT/weather), dump1090 (ADS-B aircraft)"
+type: native
+service: aetherium-rtl433
+binary: rtl_433
+requires_hardware: [rtl_sdr]
+resource_budget:
+  cpu: "0.10"
+  memory: "40M"
+  disk: "30M"
+profiles_default_on: [mesh-hub, relay]
+notes: "Requires RTL2832U-based USB SDR dongle. dump1090 provides ADS-B at http://aetherium.local:8080/dump1090"

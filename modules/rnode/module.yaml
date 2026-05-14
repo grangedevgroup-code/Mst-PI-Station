@@ -1,0 +1,13 @@
+name: rnode
+version: "1.86"
+description: "RNode — LoRa radio interface for Reticulum long-range transport"
+type: native
+service: ""
+binary: rnodeconf
+requires_hardware: [rnode]
+depends: [reticulum]
+resource_budget:
+  cpu: "0.01"
+  memory: "2M"
+  disk: "10M"
+profiles_default_on: [relay, field-node, mesh-hub, solar-relay, emergency]

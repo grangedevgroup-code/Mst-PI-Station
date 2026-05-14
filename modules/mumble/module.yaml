@@ -1,0 +1,10 @@
+name: mumble
+version: "latest"
+description: "Mumble — low-latency encrypted voice over mesh LAN"
+type: container
+requires_hardware: []
+resource_budget:
+  cpu: "0.2"
+  memory: "50M"
+  disk: "50M"
+profiles_default_on: [mesh-hub, local-services]

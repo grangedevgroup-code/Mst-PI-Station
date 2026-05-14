@@ -1,0 +1,65 @@
+name: lte-gateway
+description: "LTE/4G uplink gateway — provides internet backhaul to mesh"
+
+node:
+  profile: lte-gateway
+
+network:
+  ap_interface: auto
+  mesh_interface: auto
+  uplink_interface: auto    # will use LTE modem (usb0/wwan0)
+  hotspot_subnet: "192.168.46.0/24"
+  hotspot_ip: "192.168.46.1"
+
+hotspot:
+  enabled: true
+  ssid: "AetherGW"
+  channel: 6
+  band: "2.4GHz"
+  password: ""
+  captive_portal: true
+
+batman_adv:
+  enabled: true
+  gw_mode: "server"
+  gw_bandwidth: "20mbit/10mbit"   # realistic LTE limits
+
+lte:
+  enabled: true
+  apn: "auto"               # auto-detect from SIM
+  roaming: false
+  data_limit_mb: 0          # 0 = unlimited
+  failover_threshold_ms: 5000
+
+reticulum:
+  enabled: true
+  interfaces:
+    - type: AutoInterface
+      enabled: true
+    - type: TCPServerInterface
+      enabled: true
+      port: 4242
+    - type: TCPClientInterface
+      enabled: false        # set to true + add target for uplink to remote RNS node
+
+lxmf:
+  enabled: true
+  propagation_node: true
+
+nftables:
+  enabled: true
+  policy: "field"
+
+modules:
+  - nftables
+  - batman-adv
+  - hostapd
+  - dnsmasq
+  - lte
+  - reticulum
+  - lxmf
+  - gps
+  - captive-portal
+  - avahi
+  - sms-bridge
+  - dashboard

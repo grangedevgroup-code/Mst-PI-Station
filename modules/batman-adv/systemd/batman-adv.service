@@ -1,0 +1,16 @@
+[Unit]
+Description=B.A.T.M.A.N. Advanced Mesh Networking
+After=network.target
+Before=reticulum.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/etc/aetherium/batman-adv-setup.sh
+ExecStop=/bin/bash -c 'batctl if del $(batctl if | cut -d: -f1) 2>/dev/null || true; ip link set bat0 down 2>/dev/null || true'
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=batman-adv
+
+[Install]
+WantedBy=multi-user.target

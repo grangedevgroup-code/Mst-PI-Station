@@ -1,0 +1,13 @@
+name: tailscale
+version: "system"
+description: "Tailscale — optional overlay VPN for remote management and mesh bridging"
+type: native
+service: tailscaled
+binary: tailscale
+requires_hardware: []
+resource_budget:
+  cpu: "0.05"
+  memory: "20M"
+  disk: "30M"
+profiles_default_on: []
+notes: "Requires tailscale.auth_key in aetherium.yaml. Disabled by default — enable explicitly."
