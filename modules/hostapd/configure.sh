@@ -110,19 +110,33 @@ if systemctl is-active wpa_supplicant &>/dev/null; then
     wpa_cli -i "${AP_IFACE}" terminate 2>/dev/null || true
 fi
 
-# ── NetworkManager unmanage ──────────────────────────────────────────────────
-NM_CONF="/etc/NetworkManager/conf.d/aetherium-unmanaged.conf"
-mkdir -p /etc/NetworkManager/conf.d
-if [[ -f "${NM_CONF}" ]]; then
-    grep -q "interface-name:${AP_IFACE}" "${NM_CONF}" || \
-        sed -i "s/unmanaged-devices=/unmanaged-devices=interface-name:${AP_IFACE};/" "${NM_CONF}"
-else
-    cat > "${NM_CONF}" << NMCONF
+# ── NetworkManager unmanage (skip if NM not running) ────────────────────────
+if systemctl is-active NetworkManager &>/dev/null 2>&1 || command -v nmcli &>/dev/null; then
+    NM_CONF="/etc/NetworkManager/conf.d/aetherium-unmanaged.conf"
+    mkdir -p /etc/NetworkManager/conf.d
+    if [[ -f "${NM_CONF}" ]]; then
+        grep -q "interface-name:${AP_IFACE}" "${NM_CONF}" || \
+            sed -i "s/unmanaged-devices=/unmanaged-devices=interface-name:${AP_IFACE};/" "${NM_CONF}"
+    else
+        cat > "${NM_CONF}" << NMCONF
 [keyfile]
 unmanaged-devices=interface-name:${AP_IFACE}
 NMCONF
+    fi
+    systemctl reload NetworkManager 2>/dev/null || true
 fi
-systemctl reload NetworkManager 2>/dev/null || true
+
+# For systemd-networkd systems: write a .network file that ignores this interface
+if [[ -d /etc/systemd/network ]] && ! systemctl is-active NetworkManager &>/dev/null 2>&1; then
+    cat > "/etc/systemd/network/10-aetherium-ap-${AP_IFACE}.network" << NETD
+[Match]
+Name=${AP_IFACE}
+
+[Link]
+Unmanaged=yes
+NETD
+    systemctl reload systemd-networkd 2>/dev/null || true
+fi
 
 # ── Interface setup ──────────────────────────────────────────────────────────
 ip link set "${AP_IFACE}" down 2>/dev/null || true

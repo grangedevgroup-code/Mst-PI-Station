@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+
+# Docker modules are not supported on OpenWrt (no Docker available)
+if [[ "${DISTRO_FAMILY:-}" == "openwrt" ]]; then
+    echo "[monitoring] Skipping — Docker not available on OpenWrt"
+    exit 0
+fi
 AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
 VENV="${AETHERIUM_DIR}/venv"
 

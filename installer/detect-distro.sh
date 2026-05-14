@@ -69,6 +69,11 @@ detect_distro() {
         DISTRO_VERSION="${DISTRIB_RELEASE:-unknown}"
         PKG_MGR="opkg"
         INIT_SYSTEM="procd"
+        # OpenWrt notes:
+        #   - Docker is not available; container modules (Matrix, Gitea, Syncthing, Mumble,
+        #     Monitoring) will be skipped automatically
+        #   - systemd .service files are converted to procd init.d scripts by service-compat.sh
+        #   - Python venv requires python3 from opkg; install may be slow
     elif [[ -f /etc/debian_version ]]; then
         DISTRO_FAMILY="debian"
         DISTRO_NAME="Debian"

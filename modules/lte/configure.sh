@@ -115,11 +115,16 @@ if [[ "${LTE_APN}" == "auto" ]]; then
     fi
 fi
 
-# ── NetworkManager connection profile ────────────────────────────────────────
-NM_CONN_FILE="/etc/NetworkManager/system-connections/aetherium-lte.nmconnection"
-mkdir -p /etc/NetworkManager/system-connections
+# ── Connect: NetworkManager preferred, mmcli direct fallback ─────────────────
+NM_AVAILABLE=0
+command -v nmcli &>/dev/null && systemctl is-active NetworkManager &>/dev/null && NM_AVAILABLE=1
 
-cat > "${NM_CONN_FILE}" << NMCONN
+if [[ "${NM_AVAILABLE}" == "1" ]]; then
+    log "Configuring via NetworkManager"
+    NM_CONN_FILE="/etc/NetworkManager/system-connections/aetherium-lte.nmconnection"
+    mkdir -p /etc/NetworkManager/system-connections
+
+    cat > "${NM_CONN_FILE}" << NMCONN
 [connection]
 id=aetherium-lte
 type=gsm
@@ -138,10 +143,39 @@ route-metric=200
 [ipv6]
 method=auto
 NMCONN
+    chmod 600 "${NM_CONN_FILE}"
+    nmcli connection reload 2>/dev/null || true
+    nmcli connection up aetherium-lte 2>/dev/null || log "NM connection pending — modem may still be initializing"
 
-chmod 600 "${NM_CONN_FILE}"
-nmcli connection reload 2>/dev/null || true
-nmcli connection up aetherium-lte 2>/dev/null || true
+elif command -v mmcli &>/dev/null; then
+    # Fallback: connect directly via mmcli (works on systemd-networkd or minimal systems)
+    log "NetworkManager not active — using mmcli direct connect"
+    CONNECT_ARGS=""
+    [[ -n "${LTE_APN}" ]] && CONNECT_ARGS="apn=${LTE_APN}"
+    mmcli -m "${MODEM_IDX}" --simple-connect="${CONNECT_ARGS}" 2>/dev/null || \
+        log "WARNING: mmcli simple-connect failed — modem may need a moment, check: mmcli -m ${MODEM_IDX}"
+
+    # Write a systemd-networkd .network file so the interface gets DHCP automatically
+    if [[ -d /etc/systemd/network ]]; then
+        for iface_candidate in usb0 wwan0 wwan0_0; do
+            cat > "/etc/systemd/network/20-aetherium-lte-${iface_candidate}.network" << NETD
+[Match]
+Name=${iface_candidate}
+
+[Network]
+DHCP=yes
+
+[DHCPv4]
+RouteMetric=200
+UseDNS=yes
+NETD
+        done
+        systemctl reload systemd-networkd 2>/dev/null || true
+        log "systemd-networkd .network files written for LTE interface"
+    fi
+else
+    log "WARNING: Neither NetworkManager nor mmcli direct-connect available"
+fi
 
 # ── Wait for interface ───────────────────────────────────────────────────────
 log "Waiting for LTE interface..."

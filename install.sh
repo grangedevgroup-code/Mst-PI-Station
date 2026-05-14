@@ -337,6 +337,9 @@ main() {
         "${AETHERIUM_BIN}" deploy "${PROFILE}" || warn "Deploy had errors — check: aetherium status"
     fi
 
+    # On procd/OpenWrt: convert systemd .service files to init.d scripts
+    bash "${SCRIPT_DIR}/installer/service-compat.sh" 2>/dev/null || true
+
     systemctl start aetherium-agent.service 2>/dev/null || true
     print_summary
 }

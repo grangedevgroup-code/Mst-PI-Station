@@ -2,6 +2,12 @@
 set -euo pipefail
 source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
+# Docker modules are not supported on OpenWrt (no Docker available)
+if [[ "${DISTRO_FAMILY:-}" == "openwrt" ]]; then
+    echo "[gitea] Skipping — Docker not available on OpenWrt"
+    exit 0
+fi
+
 log() { echo "[gitea] $*"; }
 
 if ! command -v docker &>/dev/null; then

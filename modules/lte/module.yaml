@@ -1,6 +1,6 @@
 name: lte
 version: "system"
-description: "LTE/4G uplink via USB modem — ModemManager + NetworkManager"
+description: "LTE/4G/5G uplink via USB modem — ModemManager + NetworkManager or direct mmcli"
 type: native
 service: ModemManager
 binary: mmcli
