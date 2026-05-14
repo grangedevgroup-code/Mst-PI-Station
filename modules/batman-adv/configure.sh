@@ -23,11 +23,24 @@ import hashlib
 node_suffix = hashlib.md5("${NODE_NAME}".encode()).hexdigest()[:4]
 batman_ip = f"10.{int(node_suffix[:2], 16)}.{int(node_suffix[2:], 16)}.1"
 
+# Choose mesh channel: avoid AP channel to reduce co-channel interference
+# If AP on channel 6 → use channel 1; if AP on 1 → use channel 11; else use 1
+ap_channel = int("${HOTSPOT_CHANNEL:-6}")
+if ap_channel <= 3:
+    mesh_channel = 11
+elif ap_channel >= 9:
+    mesh_channel = 1
+else:
+    mesh_channel = 1
+# Freq = 2407 + channel*5 (for 2.4GHz)
+mesh_freq = 2407 + mesh_channel * 5
+
 ctx = {
     "mesh_interface":  "${MESH_IFACE}",
     "gw_mode":         "${GW_MODE}",
     "gw_bandwidth":    "100mbit/100mbit",
-    "mesh_frequency":  2412,
+    "mesh_frequency":  mesh_freq,
+    "mesh_channel":    mesh_channel,
     "batman_ip":       batman_ip,
 }
 output = tmpl.render(**ctx)

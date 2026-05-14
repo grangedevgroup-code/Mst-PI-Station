@@ -5,6 +5,7 @@ type: native
 service: aetherium-emergency
 binary: python3
 requires_hardware: []
+depends: [reticulum, lxmf]
 resource_budget:
   cpu: "0.02"
   memory: "15M"

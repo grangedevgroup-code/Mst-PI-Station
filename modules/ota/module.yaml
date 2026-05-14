@@ -5,6 +5,7 @@ type: native
 service: aetherium-ota
 binary: python3
 requires_hardware: []
+depends: [syncthing]
 resource_budget:
   cpu: "0.02"
   memory: "10M"

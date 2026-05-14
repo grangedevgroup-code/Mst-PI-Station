@@ -190,28 +190,70 @@ install_systemd() {
 }
 
 # ── Profile selection ─────────────────────────────────────────────────────────
+suggest_profile() {
+    # Suggest profile based on detected hardware
+    local has_rnode=0 has_lte=0 wifi_count=0 eth_count=0 ram_mb=0
+
+    [[ "${#HW_RNODE_DEVICES[@]}" -gt 0 ]] && has_rnode=1
+    [[ "${#HW_LTE_DEVICES[@]}" -gt 0 ]]   && has_lte=1
+    wifi_count="${#HW_WIFI_INTERFACES[@]}"
+    eth_count="${#HW_ETH_INTERFACES[@]}"
+    ram_mb="${HW_RAM_MB:-0}"
+
+    if [[ "${has_lte}" == "1" ]] && [[ "${has_rnode}" == "1" ]]; then
+        echo "lte-gateway"
+    elif [[ "${has_lte}" == "1" ]]; then
+        echo "lte-gateway"
+    elif [[ "${has_rnode}" == "1" ]] && [[ "${wifi_count}" -ge 1 ]]; then
+        echo "relay"
+    elif [[ "${wifi_count}" -ge 2 ]] && [[ "${eth_count}" -ge 1 ]]; then
+        echo "mesh-hub"
+    elif [[ "${wifi_count}" -ge 1 ]] && [[ "${eth_count}" -ge 1 ]]; then
+        echo "relay"
+    elif [[ "${wifi_count}" -ge 1 ]] && [[ "${ram_mb}" -lt 512 ]] && [[ "${ram_mb}" -gt 0 ]]; then
+        echo "field-node"
+    elif [[ "${wifi_count}" -ge 1 ]]; then
+        echo "relay"
+    else
+        echo "relay"
+    fi
+}
+
 select_profile() {
     if [[ -n "${PROFILE}" ]]; then
         return
     fi
+
+    local suggested
+    suggested=$(suggest_profile)
+
     if [[ "${NON_INTERACTIVE}" == "1" ]]; then
-        PROFILE="relay"
+        PROFILE="${suggested}"
+        info "Auto-selected profile: ${PROFILE} (based on detected hardware)"
         return
     fi
 
     echo ""
     echo -e "${BOLD}Select a deployment profile:${NC}"
     echo ""
-    echo "  1) relay          - Persistent mesh relay node (recommended for fixed installations)"
+    echo -e "  ${GREEN}Recommended for this hardware: ${suggested}${NC}"
+    echo ""
+    echo "  1) relay          - Persistent mesh relay node"
     echo "  2) field-node     - Portable field communications node"
     echo "  3) hotspot        - Wi-Fi hotspot with local services"
     echo "  4) mesh-hub       - Community mesh hub with full services"
     echo "  5) lte-gateway    - LTE/4G uplink gateway for mesh network"
     echo "  6) emergency      - Minimal emergency communications node"
-    echo "  7) local-services - Local file sharing and offline content server"
-    echo "  8) skip           - Install only, deploy later with: aetherium deploy <profile>"
+    echo "  7) solar-relay    - Low-power solar relay"
+    echo "  8) local-services - Local file sharing and offline content server"
+    echo "  9) skip           - Install only, deploy later with: aetherium deploy <profile>"
     echo ""
-    read -rp "Enter selection [1-8]: " sel
+    read -rp "Enter selection [1-9] or press Enter to accept recommendation: " sel
+    if [[ -z "${sel}" ]]; then
+        PROFILE="${suggested}"
+        info "Using recommended profile: ${PROFILE}"
+        return
+    fi
     case "${sel}" in
         1) PROFILE="relay" ;;
         2) PROFILE="field-node" ;;
@@ -219,9 +261,10 @@ select_profile() {
         4) PROFILE="mesh-hub" ;;
         5) PROFILE="lte-gateway" ;;
         6) PROFILE="emergency" ;;
-        7) PROFILE="local-services" ;;
-        8) PROFILE="" ;;
-        *) PROFILE="relay"; warn "Invalid selection, defaulting to relay" ;;
+        7) PROFILE="solar-relay" ;;
+        8) PROFILE="local-services" ;;
+        9) PROFILE="" ;;
+        *) PROFILE="${suggested}"; warn "Invalid selection, using recommendation: ${suggested}" ;;
     esac
 }
 

@@ -11,11 +11,29 @@ NODE_NAME="${NODE_NAME:-aetherium-node}"
 
 log() { echo "[dnsmasq/configure] $*"; }
 
-# Parse subnet into components
-IFS='.' read -r a b c d <<< "${HOTSPOT_IP}"
-DHCP_START="${a}.${b}.${c}.10"
-DHCP_END="${a}.${b}.${c}.200"
-DHCP_NETMASK="255.255.255.0"
+# Parse subnet and derive DHCP range from CIDR (handles /24, /25, /16, etc.)
+DHCP_NETMASK=$(python3 -c "
+import ipaddress, sys
+try:
+    net = ipaddress.IPv4Network('${HOTSPOT_SUBNET}', strict=False)
+    print(net.netmask)
+except Exception:
+    print('255.255.255.0')
+" 2>/dev/null || echo "255.255.255.0")
+
+# Calculate host range within the subnet
+read -r DHCP_START DHCP_END < <(python3 -c "
+import ipaddress, sys
+try:
+    net = ipaddress.IPv4Network('${HOTSPOT_SUBNET}', strict=False)
+    hosts = list(net.hosts())
+    # Skip first 9 IPs for static assignments (.1=gateway, .2-.9=reserved)
+    start_idx = min(9, len(hosts) - 2)
+    end_idx = max(start_idx + 1, int(len(hosts) * 0.9))
+    print(hosts[start_idx], hosts[end_idx])
+except Exception:
+    print('192.168.42.10 192.168.42.200')
+" 2>/dev/null || echo "192.168.42.10 192.168.42.200")
 
 # Check if uplink exists
 UPLINK_AVAILABLE="false"

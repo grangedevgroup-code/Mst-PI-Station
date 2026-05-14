@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-NODE_NAME="${NODE_NAME:-aetherium}"
+NODE_NAME="${NODE_NAME:-$(hostname -s 2>/dev/null || echo aetherium)}"
 AP_INTERFACE="${AP_INTERFACE:-wlan0}"
+MESH_INTERFACE="${MESH_INTERFACE:-}"
 
 log() { echo "[avahi/configure] $*"; }
 
@@ -13,7 +14,25 @@ host-name=${NODE_NAME}
 domain-name=local
 use-ipv4=yes
 use-ipv6=no
-allow-interfaces=${AP_INTERFACE},bat0,eth0
+# Dynamically build interface list from deployed configuration
+AVAHI_ALLOW=$(python3 -c "
+ifaces = ['${AP_INTERFACE}', 'bat0', 'eth0']
+mesh = '${MESH_INTERFACE}'
+if mesh and mesh not in ifaces:
+    ifaces.append(mesh)
+# Add any ethernet interfaces that are up
+import os
+for name in os.listdir('/sys/class/net'):
+    if name.startswith(('eth','en')) and name not in ifaces:
+        try:
+            state = open(f'/sys/class/net/{name}/operstate').read().strip()
+            if state in ('up','unknown'):
+                ifaces.append(name)
+        except Exception:
+            pass
+print(','.join(ifaces))
+" 2>/dev/null || echo "${AP_INTERFACE},bat0,eth0")
+allow-interfaces=${AVAHI_ALLOW}
 deny-interfaces=tun0,tailscale0
 ratelimit-interval-usec=1000000
 ratelimit-burst=1000

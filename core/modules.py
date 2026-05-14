@@ -4,7 +4,7 @@ import os
 import subprocess
 import yaml
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from core.config import Config
 from core.hardware import Hardware
@@ -20,6 +20,7 @@ class ModuleManager:
         self.modules_dir = install_dir / "modules"
         self.config = config
         self.hardware = hardware
+        self._deploy_in_progress: Set[str] = set()   # cycle guard
 
     def list_modules(self) -> List[Dict[str, Any]]:
         """List all modules with their metadata and current status."""
@@ -40,27 +41,22 @@ class ModuleManager:
     def _get_status(self, name: str, meta: Dict) -> str:
         """Determine current module status."""
         mod_type = meta.get("type", "native")
-
         if mod_type == "native":
             service = meta.get("service", f"aetherium-{name}")
             return self.get_service_status(service)
-        elif mod_type == "container":
+        elif mod_type in ("docker", "container"):
             return self._get_container_status(name)
         elif mod_type == "both":
             native_svc = meta.get("service", f"aetherium-{name}")
-            native_st = self.get_service_status(native_svc)
-            if native_st == "active":
+            if self.get_service_status(native_svc) == "active":
                 return "active"
             return self._get_container_status(name)
-
-        # Check if binary/package exists
         binary = meta.get("binary")
         if binary and _which(binary):
             return "installed"
         return "available"
 
     def get_service_status(self, service_name: str) -> str:
-        """Get systemd service status."""
         try:
             result = subprocess.run(
                 ["systemctl", "is-active", service_name],
@@ -71,7 +67,6 @@ class ModuleManager:
             return "unknown"
 
     def _get_container_status(self, name: str) -> str:
-        """Get Docker container status."""
         try:
             result = subprocess.run(
                 ["docker", "compose", "-f",
@@ -85,36 +80,84 @@ class ModuleManager:
         except Exception:
             return "unavailable"
 
-    def deploy_module(self, name: str, profile: Dict) -> Tuple[bool, str]:
+    def _load_meta(self, name: str) -> Dict:
+        meta_file = self.modules_dir / name / "module.yaml"
+        if not meta_file.exists():
+            return {}
+        with open(meta_file) as f:
+            return yaml.safe_load(f) or {}
+
+    def _resolve_deps(self, name: str, profile: Dict,
+                      visited: Optional[Set[str]] = None) -> List[str]:
+        """Return ordered list of dependencies that need deploying before `name`."""
+        if visited is None:
+            visited = set()
+        if name in visited:
+            return []   # cycle guard
+        visited.add(name)
+
+        meta = self._load_meta(name)
+        deps = meta.get("depends", [])
+        order = []
+        for dep in deps:
+            # Check if dep is already active
+            dep_meta = self._load_meta(dep)
+            dep_status = self._get_status(dep, dep_meta)
+            if dep_status in ("active", "installed"):
+                continue
+            # Recurse for transitive deps
+            order.extend(self._resolve_deps(dep, profile, visited))
+            if dep not in order:
+                order.append(dep)
+        return order
+
+    def deploy_module(self, name: str, profile: Dict,
+                      _dep_chain: Optional[Set[str]] = None) -> Tuple[bool, str]:
         """Install and configure a module as part of a profile deploy."""
         module_dir = self.modules_dir / name
         if not module_dir.exists():
             return False, f"Module '{name}' not found"
 
-        meta_file = module_dir / "module.yaml"
-        meta = {}
-        if meta_file.exists():
-            with open(meta_file) as f:
-                meta = yaml.safe_load(f) or {}
+        # Cycle detection
+        if _dep_chain is None:
+            _dep_chain = set()
+        if name in _dep_chain:
+            return False, f"Dependency cycle detected for '{name}'"
+        _dep_chain = _dep_chain | {name}
 
-        # Check hardware requirements
+        meta = self._load_meta(name)
+
+        # ── Hardware requirements ────────────────────────────────────────────
         hw_req = meta.get("requires_hardware", [])
         for req in hw_req:
             if req == "wifi" and not self.hardware.has_wifi:
                 return False, "requires Wi-Fi (not detected)"
-            if req == "rnode" and not self.hardware.has_rnode:
-                return True, "skipped (RNode not detected)"
-            if req == "lte" and not self.hardware.has_lte:
+            if req in ("rnode", "rtl_sdr") and not self.hardware.has_rnode:
+                return True, f"skipped ({req} not detected)"
+            if req in ("lte_modem", "lte") and not self.hardware.has_lte:
                 return True, "skipped (LTE modem not detected)"
 
-        # Run install.sh
+        # ── Dependency enforcement ───────────────────────────────────────────
+        deps = meta.get("depends", [])
+        for dep in deps:
+            dep_meta = self._load_meta(dep)
+            if not dep_meta:
+                continue
+            dep_status = self._get_status(dep, dep_meta)
+            if dep_status not in ("active", "installed"):
+                print(f"  [modules] Auto-deploying dependency: {dep} (required by {name})")
+                ok, msg = self.deploy_module(dep, profile, _dep_chain)
+                if not ok:
+                    return False, f"dependency '{dep}' failed: {msg}"
+
+        # ── Install ──────────────────────────────────────────────────────────
         install_script = module_dir / "install.sh"
         if install_script.exists():
             success, msg = self._run_script(install_script, name, profile)
             if not success:
                 return False, f"install failed: {msg}"
 
-        # Run configure.sh
+        # ── Configure ────────────────────────────────────────────────────────
         configure_script = module_dir / "configure.sh"
         if configure_script.exists():
             env = self._build_env(name, profile)
@@ -125,12 +168,6 @@ class ModuleManager:
         return True, "ok"
 
     def enable(self, name: str) -> Tuple[bool, str]:
-        """Enable a module outside of a full profile deploy."""
-        module_dir = self.modules_dir / name
-        if not module_dir.exists():
-            return False, f"Module '{name}' not found"
-
-        # Run install + configure with current profile context
         current_profile_name = self.config.get("node.profile", "relay")
         from core.profiles import ProfileManager
         pm = ProfileManager(self.install_dir, self.config, self.hardware)
@@ -138,17 +175,11 @@ class ModuleManager:
         return self.deploy_module(name, profile)
 
     def disable(self, name: str) -> Tuple[bool, str]:
-        """Disable and stop a module."""
         module_dir = self.modules_dir / name
         if not module_dir.exists():
             return False, f"Module '{name}' not found"
 
-        meta_file = module_dir / "module.yaml"
-        meta = {}
-        if meta_file.exists():
-            with open(meta_file) as f:
-                meta = yaml.safe_load(f) or {}
-
+        meta = self._load_meta(name)
         mod_type = meta.get("type", "native")
 
         if mod_type in ("native", "both"):
@@ -160,7 +191,7 @@ class ModuleManager:
             except Exception as e:
                 return False, str(e)
 
-        elif mod_type == "container":
+        elif mod_type in ("docker", "container"):
             try:
                 subprocess.run(
                     ["docker", "compose", "-f",
@@ -174,17 +205,13 @@ class ModuleManager:
         return True, "disabled"
 
     def update(self, name: str) -> Tuple[bool, str]:
-        """Update a module."""
-        module_dir = self.modules_dir / name
-        update_script = module_dir / "update.sh"
+        update_script = self.modules_dir / name / "update.sh"
         if update_script.exists():
-            success, msg = self._run_script(update_script, name, {})
-            return success, msg
+            return self._run_script(update_script, name, {})
         return False, "no update script"
 
     def _run_script(self, script: Path, module_name: str,
                     profile: Dict, env: Optional[Dict] = None) -> Tuple[bool, str]:
-        """Run a module script with proper environment."""
         run_env = os.environ.copy()
         run_env.update({
             "AETHERIUM_DIR": str(self.install_dir),
@@ -216,40 +243,61 @@ class ModuleManager:
 
     def _build_env(self, module_name: str, profile: Dict) -> Dict[str, str]:
         """Build environment variables for module scripts from profile context."""
-        env = {}
+        env: Dict[str, str] = {}
         net = profile.get("network", {})
-        env["AP_INTERFACE"] = net.get("ap_interface", "wlan0")
-        env["MESH_INTERFACE"] = net.get("mesh_interface", "wlan0")
-        env["UPLINK_INTERFACE"] = net.get("uplink_interface", "eth0")
-        env["HOTSPOT_SUBNET"] = net.get("hotspot_subnet", "192.168.42.0/24")
-        env["HOTSPOT_IP"] = net.get("hotspot_ip", "192.168.42.1")
+        env["AP_INTERFACE"]    = net.get("ap_interface") or "wlan0"
+        env["MESH_INTERFACE"]  = net.get("mesh_interface") or "wlan0"
+        env["UPLINK_INTERFACE"] = net.get("uplink_interface") or "eth0"
+        env["HOTSPOT_SUBNET"]  = net.get("hotspot_subnet") or "192.168.42.0/24"
+        env["HOTSPOT_IP"]      = net.get("hotspot_ip") or "192.168.42.1"
 
         hs = profile.get("hotspot", {})
-        env["HOTSPOT_SSID"] = hs.get("ssid", "Aetherium")
-        env["HOTSPOT_CHANNEL"] = str(hs.get("channel", 6))
-        env["HOTSPOT_BAND"] = hs.get("band", "2.4GHz")
-        env["HOTSPOT_PASSWORD"] = hs.get("password", "")
-        env["HOTSPOT_HIDDEN"] = "1" if hs.get("hidden") else "0"
+        env["HOTSPOT_SSID"]     = hs.get("ssid") or "Aetherium"
+        env["HOTSPOT_CHANNEL"]  = str(hs.get("channel") or 6)
+        env["HOTSPOT_BAND"]     = hs.get("band") or "2.4GHz"
+        env["HOTSPOT_PASSWORD"] = hs.get("password") or ""
+        env["HOTSPOT_HIDDEN"]   = "1" if hs.get("hidden") else "0"
+        env["CAPTIVE_PORTAL"]   = "1" if hs.get("captive_portal", True) else "0"
 
         node = profile.get("node", {})
-        env["NODE_NAME"] = node.get("name", "aetherium-node")
-        env["NODE_PROFILE"] = node.get("profile", "relay")
+        # NODE_NAME: profile → config → system hostname
+        env["NODE_NAME"]    = (node.get("name") or
+                               self.config.get("node.name") or
+                               os.uname().nodename or
+                               "aetherium-node")
+        env["NODE_PROFILE"] = node.get("profile") or "relay"
 
         rns = profile.get("reticulum", {})
-        env["RNS_ENABLED"] = "1" if rns.get("enabled") else "0"
-        env["RNS_CONFIG_DIR"] = rns.get("config_dir", "/etc/reticulum")
+        env["RNS_ENABLED"]    = "1" if rns.get("enabled") else "0"
+        env["RNS_CONFIG_DIR"] = rns.get("config_dir") or "/etc/reticulum"
 
         bat = profile.get("batman_adv", {})
-        env["BATMAN_ENABLED"] = "1" if bat.get("enabled") else "0"
-        env["BATMAN_INTERFACE"] = bat.get("interface", "wlan0")
-        env["BATMAN_GW_MODE"] = bat.get("gw_mode", "off")
+        env["BATMAN_ENABLED"]    = "1" if bat.get("enabled") else "0"
+        env["BATMAN_INTERFACE"]  = bat.get("interface") or env["MESH_INTERFACE"]
+        env["BATMAN_GW_MODE"]    = bat.get("gw_mode") or "off"
 
         rnode = profile.get("rnode", {})
-        env["RNODE_PORT"] = rnode.get("port", "")
-        env["RNODE_FREQ"] = str(rnode.get("frequency", 915000000))
-        env["RNODE_BW"] = str(rnode.get("bandwidth", 125000))
-        env["RNODE_SF"] = str(rnode.get("sf", 7))
-        env["RNODE_TX_POWER"] = str(rnode.get("tx_power", 17))
+        env["RNODE_PORT"]     = rnode.get("port") or ""
+        env["RNODE_FREQ"]     = str(rnode.get("frequency") or 915000000)
+        env["RNODE_BW"]       = str(rnode.get("bandwidth") or 125000)
+        env["RNODE_SF"]       = str(rnode.get("sf") or 7)
+        env["RNODE_TX_POWER"] = str(rnode.get("tx_power") or 17)
+
+        lte = profile.get("lte", {})
+        env["LTE_APN"]     = lte.get("apn") or "auto"
+        env["LTE_ROAMING"] = "1" if lte.get("roaming") else "0"
+
+        power = profile.get("power", {})
+        env["POWER_MODE"]         = power.get("mode") or "balanced"
+        env["DISABLE_HDMI"]       = "1" if power.get("disable_hdmi") else "0"
+        env["DISABLE_LEDS"]       = "1" if power.get("disable_leds") else "0"
+        env["DISABLE_BLUETOOTH"]  = "1" if power.get("disable_bluetooth") else "0"
+
+        # Hardware-detected regulatory domain and LoRa frequency
+        hw_cc = self.hardware.regulatory_domain()
+        env["REGULATORY_DOMAIN"]  = hw_cc
+        if not rnode.get("frequency") and hw_cc:
+            env["RNODE_FREQ"] = str(self.hardware.lora_frequency_for_region(hw_cc))
 
         return env
 

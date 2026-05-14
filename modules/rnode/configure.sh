@@ -3,7 +3,28 @@ set -euo pipefail
 
 AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
 RNODE_PORT="${RNODE_PORT:-}"
-RNODE_FREQ="${RNODE_FREQ:-915000000}"
+REGULATORY_DOMAIN="${REGULATORY_DOMAIN:-}"
+
+# Auto-detect regional LoRa frequency if not explicitly set
+if [[ -z "${RNODE_FREQ:-}" ]]; then
+    if [[ -z "${REGULATORY_DOMAIN}" ]]; then
+        TZ=$(timedatectl show --property=Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || echo "")
+        case "${TZ}" in
+            America/*) REGULATORY_DOMAIN="US" ;;
+            Australia/*|Pacific/Auckland) REGULATORY_DOMAIN="AU" ;;
+            Asia/Tokyo) REGULATORY_DOMAIN="JP" ;;
+            Asia/Shanghai|Asia/Beijing) REGULATORY_DOMAIN="CN" ;;
+            *) REGULATORY_DOMAIN="DE" ;;
+        esac
+    fi
+    case "${REGULATORY_DOMAIN}" in
+        US|CA|MX|BR|AU|NZ|AR|CL|CO) RNODE_FREQ="915000000" ;;
+        JP|KR)                        RNODE_FREQ="920000000" ;;
+        CN)                           RNODE_FREQ="470000000" ;;
+        *)                            RNODE_FREQ="868000000" ;;
+    esac
+    log "Auto-detected LoRa frequency: ${RNODE_FREQ} Hz (region: ${REGULATORY_DOMAIN})"
+fi
 
 log() { echo "[rnode/configure] $*"; }
 

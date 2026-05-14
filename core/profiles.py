@@ -54,6 +54,10 @@ class ProfileManager:
 
         return profile
 
+    def suggest(self) -> str:
+        """Return the recommended profile name based on current hardware."""
+        return self.hardware.suggest_profile()
+
     def list_profiles(self) -> List[Dict[str, str]]:
         """List all available profiles."""
         result = []
