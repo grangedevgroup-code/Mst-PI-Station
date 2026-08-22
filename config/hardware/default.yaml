@@ -1,0 +1,24 @@
+# Unified hardware defaults — applied IDENTICALLY to every device.
+#
+# Aetherium intentionally ships ONE setup for all hardware (Pi 3/4/5, Zero 2,
+# other ARM SBCs, x86_64, OpenWrt). There are no per-model config files.
+#
+# Anything that genuinely differs between boards is decided at RUNTIME, not here:
+#   * Interface assignment ("auto" below) is resolved by core/hardware.py from
+#     the radios actually present (AP-capable, mesh-capable, uplink).
+#   * Heavy / optional services are gated by `min_ram_mb` and `needs_docker`
+#     declared in each module's module.yaml, evaluated the same way on every
+#     device, so a small board auto-defers what it cannot run instead of OOMing.
+#   * Pi-only power knobs (disable_hdmi/leds/bluetooth) are applied by the power
+#     module and simply no-op on hardware that lacks them.
+#
+# The result: the same profile produces the same intent on any device, and the
+# device adapts itself — rather than maintaining several different versions.
+
+network:
+  ap_interface: auto       # resolved to the best AP-capable radio at deploy time
+  mesh_interface: auto     # resolved to a 2nd radio if present, else shares the AP radio
+  uplink_interface: auto   # ethernet → WWAN/LTE → none, chosen at runtime
+
+power:
+  mode: balanced           # profiles (e.g. solar-relay) override to powersave

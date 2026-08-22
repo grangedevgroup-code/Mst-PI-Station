@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Network{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-cyan-400">Network</h1>
+    <p class="text-gray-500 text-sm">Interface status and mesh topology</p>
+</div>
+
+<!-- Interfaces -->
+<div class="mb-6">
+    <h2 class="section-title">Interfaces</h2>
+    <div class="grid gap-3">
+        {% for iface in interfaces %}
+        {% if iface.name not in ('lo',) %}
+        <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-mono text-cyan-400 font-bold">{{ iface.name }}</span>
+                <span class="px-2 py-0.5 rounded text-xs {% if iface.state == 'UP' %}bg-green-900 text-green-300{% else %}bg-gray-800 text-gray-500{% endif %}">
+                    {{ iface.state }}
+                </span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm text-gray-400">
+                <div>
+                    <span class="text-gray-600">Mode:</span>
+                    <span class="ml-1">{{ iface.mode or '—' }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-600">SSID:</span>
+                    <span class="ml-1">{{ iface.ssid or '—' }}</span>
+                </div>
+                <div class="col-span-2">
+                    <span class="text-gray-600">Addresses:</span>
+                    <span class="ml-1 font-mono">{% for a in iface.addresses %}{{ a }} {% endfor %}</span>
+                </div>
+                {% if iface.signal %}
+                <div class="col-span-2">
+                    <span class="text-gray-600">Signal:</span>
+                    <span class="ml-1">{{ iface.signal }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- batman-adv peers -->
+<div class="mb-6">
+    <h2 class="section-title">Mesh Peers (batman-adv)</h2>
+    {% if batman_peers %}
+    <div class="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="text-xs text-gray-500 uppercase bg-gray-800/50">
+                <tr>
+                    <th class="px-4 py-2 text-left">MAC Address</th>
+                    <th class="px-4 py-2 text-left">Interface</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                {% for peer in batman_peers %}
+                <tr>
+                    <td class="px-4 py-2 font-mono text-cyan-300">{{ peer.mac }}</td>
+                    <td class="px-4 py-2 text-gray-400">{{ peer.iface }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 text-center text-gray-500">
+        <p>No mesh peers discovered yet.</p>
+        <p class="text-xs mt-1">batman-adv will find peers automatically on the same frequency.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

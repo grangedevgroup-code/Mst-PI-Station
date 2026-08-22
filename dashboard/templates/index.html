@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+
+{% block content %}
+<div x-data="dashboard()" x-init="init()">
+
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-cyan-400">{{ node_name }}</h1>
+        <p class="text-gray-500 text-sm">Profile: <span class="text-yellow-400">{{ profile }}</span> &nbsp;·&nbsp; Uptime: {{ uptime }}</p>
+    </div>
+
+    <!-- System stats cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+            <div class="stat-label">CPU</div>
+            <div class="stat-value" x-text="metrics.cpu_percent + '%'">{{ cpu_percent }}%</div>
+            <div class="stat-bar"><div class="stat-bar-fill bg-cyan-500" :style="'width:' + metrics.cpu_percent + '%'"></div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Memory</div>
+            <div class="stat-value" x-text="metrics.mem_percent + '%'">{{ mem_percent|round(1) }}%</div>
+            <div class="stat-bar"><div class="stat-bar-fill bg-blue-500" :style="'width:' + metrics.mem_percent + '%'"></div></div>
+            <div class="stat-sub">{{ mem_used_mb }}MB / {{ mem_total_mb }}MB</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Disk</div>
+            <div class="stat-value">{{ disk_percent|round(1) }}%</div>
+            <div class="stat-bar"><div class="stat-bar-fill bg-purple-500" style="width:{{ disk_percent }}%"></div></div>
+            <div class="stat-sub">{{ disk_used_gb }}GB / {{ disk_total_gb }}GB</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Temperature</div>
+            <div class="stat-value" :class="{'text-red-400': metrics.temp > 75, 'text-yellow-400': metrics.temp > 60}"
+                 x-text="metrics.temp ? metrics.temp + '°C' : '—'">
+                {% if cpu_temp %}{{ cpu_temp }}°C{% else %}—{% endif %}
+            </div>
+            <div class="stat-sub" x-text="metrics.uptime">{{ uptime }}</div>
+        </div>
+    </div>
+
+    <!-- Services grid -->
+    <div class="mb-6">
+        <h2 class="section-title">Active Services</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {% for mod in modules %}
+            {% if mod.status in ('active', 'failed', 'inactive') %}
+            <div class="service-card status-{{ mod.status }}">
+                <div class="flex items-center justify-between">
+                    <span class="font-medium text-sm">{{ mod.name }}</span>
+                    <span class="status-dot status-{{ mod.status }}">
+                        {% if mod.status == 'active' %}●{% elif mod.status == 'failed' %}✗{% else %}○{% endif %}
+                    </span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1 truncate">{{ mod.description | default('') | truncate(40) }}</div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Network interfaces quick view -->
+    <div class="mb-6">
+        <h2 class="section-title">Network</h2>
+        <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="text-xs text-gray-500 uppercase bg-gray-800/50">
+                    <tr>
+                        <th class="px-4 py-2 text-left">Interface</th>
+                        <th class="px-4 py-2 text-left">State</th>
+                        <th class="px-4 py-2 text-left">Addresses</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800">
+                    {% for iface in status.interfaces %}
+                    {% if iface.name != 'lo' %}
+                    <tr class="hover:bg-gray-800/30">
+                        <td class="px-4 py-2 font-mono text-cyan-400">{{ iface.name }}</td>
+                        <td class="px-4 py-2">
+                            <span class="{% if iface.state == 'UP' %}text-green-400{% else %}text-gray-500{% endif %}">
+                                {{ iface.state }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-2 text-gray-400 text-xs">
+                            {% for addr in iface.addresses %}{{ addr }} {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function dashboard() {
+    return {
+        metrics: {
+            cpu_percent: {{ cpu_percent }},
+            mem_percent: {{ mem_percent }},
+            temp: {{ cpu_temp or 'null' }},
+            uptime: '{{ uptime }}',
+        },
+        ws: null,
+        init() {
+            this.connectWS();
+        },
+        connectWS() {
+            const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            this.ws = new WebSocket(`${proto}//${window.location.host}/ws/metrics`);
+            this.ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                this.metrics.cpu_percent = data.cpu.toFixed(1);
+                this.metrics.mem_percent = data.mem.toFixed(1);
+                this.metrics.temp = data.temp;
+                this.metrics.uptime = data.uptime;
+            };
+            this.ws.onclose = () => setTimeout(() => this.connectWS(), 5000);
+        }
+    }
+}
+</script>
+{% endblock %}

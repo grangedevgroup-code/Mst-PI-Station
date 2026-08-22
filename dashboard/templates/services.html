@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Services{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-cyan-400">Services</h1>
+    <p class="text-gray-500 text-sm">Manage Aetherium modules</p>
+</div>
+
+<div class="grid gap-4" x-data="services()">
+    {% for mod in modules %}
+    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 flex items-center justify-between">
+        <div class="flex-1">
+            <div class="flex items-center gap-3">
+                <span class="status-dot status-{{ mod.status }} text-lg">
+                    {% if mod.status == 'active' %}●{% elif mod.status == 'failed' %}✗{% else %}○{% endif %}
+                </span>
+                <div>
+                    <div class="font-medium">{{ mod.name }}</div>
+                    <div class="text-xs text-gray-500">{{ mod.description | default('') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-600">{{ mod.get('resource_budget', {}).get('memory', '') }}</span>
+            <span class="px-2 py-1 rounded text-xs
+                {% if mod.status == 'active' %}bg-green-900/50 text-green-300
+                {% elif mod.status == 'failed' %}bg-red-900/50 text-red-300
+                {% elif mod.status == 'inactive' %}bg-gray-800 text-gray-400
+                {% else %}bg-gray-800/50 text-gray-500
+                {% endif %}">
+                {{ mod.status }}
+            </span>
+            {% if mod.status == 'active' %}
+            <button onclick="toggleModule('{{ mod.name }}', 'disable')"
+                    class="btn btn-sm btn-danger">Stop</button>
+            {% elif mod.status in ('inactive', 'available', 'installed') %}
+            <button onclick="toggleModule('{{ mod.name }}', 'enable')"
+                    class="btn btn-sm btn-success">Start</button>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-800 border border-gray-700 text-sm px-4 py-2 rounded-lg shadow-lg z-50"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function toggleModule(name, action) {
+    const res = await fetch(`/services/${name}/${action}`, {method: 'POST'});
+    const data = await res.json();
+    showToast(data.success ? `✓ ${name} ${action}d` : `✗ ${data.message}`);
+    setTimeout(() => location.reload(), 1500);
+}
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.remove('hidden');
+    setTimeout(() => t.classList.add('hidden'), 3000);
+}
+</script>
+{% endblock %}
