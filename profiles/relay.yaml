@@ -1,0 +1,74 @@
+name: relay
+description: "Persistent mesh relay node — fixed installation, always-on"
+
+node:
+  profile: relay
+
+network:
+  ap_interface: auto
+  mesh_interface: auto
+  uplink_interface: auto
+  hotspot_subnet: "192.168.42.0/24"
+  hotspot_ip: "192.168.42.1"
+
+hotspot:
+  enabled: true
+  ssid: "Aetherium-Relay"
+  channel: 6
+  band: "2.4GHz"
+  password: ""
+  captive_portal: true
+  hidden: false
+
+batman_adv:
+  enabled: true
+  gw_mode: "server"
+  gw_bandwidth: "100mbit/100mbit"
+
+reticulum:
+  enabled: true
+  interfaces:
+    - type: AutoInterface
+      enabled: true
+      group: "aetherium-relay"
+    - type: TCPServerInterface
+      enabled: true
+      port: 4242
+    - type: RNodeInterface
+      enabled: auto
+      port: auto
+      frequency: 915000000
+      bandwidth: 125000
+      sf: 7
+      coding_rate: 5
+      tx_power: 17
+
+lxmf:
+  enabled: true
+  propagation_node: true
+  announce_interval: 1800
+
+nomadnet:
+  enabled: true
+
+nftables:
+  enabled: true
+  policy: "field"
+
+modules:
+  - nftables
+  - batman-adv
+  - hostapd
+  - dnsmasq
+  - reticulum
+  - lxmf
+  - nomadnet
+  - rnode
+  - gps
+  - aprs
+  - meshtastic
+  - captive-portal
+  - avahi
+  - emergency
+  - ota
+  - dashboard

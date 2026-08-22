@@ -1,0 +1,59 @@
+name: emergency
+description: "Minimal emergency communications node — essentials only, fast boot"
+
+node:
+  profile: emergency
+
+network:
+  ap_interface: auto
+  mesh_interface: auto
+  uplink_interface: auto
+  hotspot_subnet: "10.0.0.0/24"
+  hotspot_ip: "10.0.0.1"
+
+hotspot:
+  enabled: true
+  ssid: "EMERGENCY-NET"
+  channel: 1
+  band: "2.4GHz"
+  password: ""
+  captive_portal: false    # No friction in emergencies
+  hidden: false
+
+batman_adv:
+  enabled: true
+  gw_mode: "off"
+
+reticulum:
+  enabled: true
+  interfaces:
+    - type: AutoInterface
+      enabled: true
+    - type: RNodeInterface
+      enabled: auto
+      port: auto
+      frequency: 915000000
+      bandwidth: 125000
+      sf: 12               # Maximum range, minimum rate
+      tx_power: 20
+
+lxmf:
+  enabled: true
+  propagation_node: true
+
+nftables:
+  enabled: true
+  policy: "open"
+
+modules:
+  - nftables
+  - batman-adv
+  - hostapd
+  - dnsmasq
+  - reticulum
+  - lxmf
+  - rnode
+  - gps
+  - avahi
+  - emergency
+  - dashboard

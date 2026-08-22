@@ -1,0 +1,26 @@
+# Aetherium core virtualenv dependencies.
+#
+# Pinned to compatible-release ranges so EVERY device (aarch64 / armv7l / x86_64)
+# installs the same Python stack — part of "one setup on any device". Reticulum,
+# LXMF and NomadNet are installed separately by their modules (from the vendored
+# SourceDependencies/ when present, else PyPI), so they are intentionally not
+# listed here.
+
+# CLI + rendering
+click~=8.1
+rich~=13.7
+jinja2~=3.1
+pyyaml~=6.0
+
+# Dashboard (FastAPI app on :8080)
+fastapi~=0.111
+uvicorn[standard]~=0.30
+aiofiles~=23.2
+python-multipart~=0.0.9
+httpx~=0.27
+
+# Agent / system
+psutil~=5.9
+python-daemon~=3.0
+requests~=2.31
+pyserial~=3.5

@@ -1,0 +1,29 @@
+[Unit]
+Description=Aetherium Agent — Node Health Monitor and Watchdog
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/aetherium/venv/bin/python3 /opt/aetherium/core/agent.py
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=5
+
+# Runtime dirs
+RuntimeDirectory=aetherium
+LogsDirectory=aetherium
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=aetherium-agent
+
+# Security
+NoNewPrivileges=false
+ProtectSystem=false
+ReadWritePaths=/etc/aetherium /var/lib/aetherium /var/log/aetherium /var/run/aetherium
+
+[Install]
+WantedBy=multi-user.target

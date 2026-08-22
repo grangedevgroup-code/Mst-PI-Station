@@ -1,0 +1,23 @@
+[Unit]
+Description=Aetherium Watchdog — secondary service self-healer
+After=aetherium-agent.service
+# OPTIONAL redundancy. The primary aetherium-agent already self-heals services,
+# and systemd restarts the agent itself (Restart=always). Enable this only if
+# you want a second, independent healer that does nothing but restart failed
+# units:   sudo systemctl enable --now aetherium-watchdog
+# It is intentionally NOT enabled by the installer.
+
+[Service]
+Type=simple
+# --watchdog-only runs the agent's healer loop alone (no status/failover/peers),
+# so it never races the primary agent's status/failover work. It keeps its own
+# loop + backoff state instead of being respawned from a bash sleep loop.
+ExecStart=/opt/aetherium/venv/bin/python3 /opt/aetherium/core/agent.py --watchdog-only
+Restart=always
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=aetherium-watchdog
+
+[Install]
+WantedBy=multi-user.target

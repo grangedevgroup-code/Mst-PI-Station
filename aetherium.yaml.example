@@ -1,0 +1,135 @@
+# Aetherium Node Configuration
+# Copy to /etc/aetherium/aetherium.yaml and edit for your node.
+# Apply changes: sudo aetherium deploy <profile>
+# Reference:     https://aetherium.io/docs/config-reference
+
+# ── Node Identity ──────────────────────────────────────────────────────────────
+node:
+  name: "aetherium-node"          # unique name for this node
+  profile: relay                  # relay|field-node|hotspot|mesh-hub|lte-gateway|emergency|solar-relay|local-services
+  location: ""                    # optional: "Grid 4-7", "Hilltop Alpha", etc.
+
+# ── Network Interfaces ────────────────────────────────────────────────────────
+# Use "auto" to let Aetherium pick the best interface based on detected hardware.
+# Or specify explicitly: "wlan0", "wlan1", "eth0", "usb0"
+network:
+  ap_interface: auto              # Wi-Fi interface for the hotspot AP
+  mesh_interface: auto            # Wi-Fi interface for batman-adv mesh (ideally 2nd adapter)
+  uplink_interface: auto          # Uplink: eth0, usb0 (LTE), or empty for none
+  hotspot_subnet: "192.168.42.0/24"
+  hotspot_ip: "192.168.42.1"
+
+# ── Wi-Fi Hotspot ─────────────────────────────────────────────────────────────
+hotspot:
+  enabled: true
+  ssid: "Aetherium"               # your network name
+  channel: 6                      # 1,6,11 for 2.4GHz / 36,40,44,149+ for 5GHz
+  band: "2.4GHz"                  # "2.4GHz" or "5GHz"
+  password: ""                    # empty = open network (recommended for field use)
+  captive_portal: true            # show node info page when connecting
+  hidden: false                   # hide SSID
+
+# ── batman-adv Mesh ──────────────────────────────────────────────────────────
+batman_adv:
+  enabled: true
+  gw_mode: "off"                  # "off"|"client"|"server" (server if this node has uplink)
+
+# ── Reticulum ─────────────────────────────────────────────────────────────────
+reticulum:
+  enabled: true
+  config_dir: "/etc/reticulum"
+  # Interfaces are auto-configured from profile + hardware detection
+  # Add custom interfaces below:
+  extra_interfaces: []
+  # Example TCP client to connect to a remote relay:
+  # extra_interfaces:
+  #   - name: RemoteRelay
+  #     type: TCPClientInterface
+  #     target_host: relay.example.com
+  #     target_port: 4242
+
+# ── RNode LoRa ────────────────────────────────────────────────────────────────
+rnode:
+  port: ""                        # auto-detected or specify: "/dev/ttyUSB0"
+  frequency: 915000000            # 915MHz (US), 868MHz (EU), 433MHz (other)
+  bandwidth: 125000               # 125000 (standard) | 250000 | 500000
+  sf: 7                           # spreading factor 7-12 (higher=longer range, slower)
+  tx_power: 17                    # dBm (max 20, lower for battery)
+
+# ── LTE Backhaul ──────────────────────────────────────────────────────────────
+lte:
+  enabled: false
+  apn: "auto"                     # carrier APN, or "auto" to detect from SIM
+
+# ── WireGuard VPN ─────────────────────────────────────────────────────────────
+wireguard:
+  enabled: false
+  address: "10.10.0.1/24"        # this node's VPN IP
+  port: 51820
+  peers: []
+  # peers:
+  #   - name: "laptop"
+  #     public_key: "..."
+  #     allowed_ips: ["10.10.0.2/32"]
+
+# ── GPS ───────────────────────────────────────────────────────────────────────
+gps:
+  device: "auto"                  # auto-detect or "/dev/ttyUSB1", "tcp://localhost:2947"
+  enable_ntp: true                # disciplie system time from GPS (requires chrony)
+  location_update_interval: 60   # seconds
+
+# ── APRS ──────────────────────────────────────────────────────────────────────
+aprs:
+  callsign: "N0CALL"              # REQUIRED for TX — your amateur radio callsign
+  ssid: 9                         # 9=mobile, 0=fixed station
+  rx_only: true                   # true = receive only (no license needed)
+                                  # false = transmit APRS beacons (requires ham license)
+  symbol: "/["                    # APRS symbol: /[ = laptop, /# = digipeater
+  comment: "Aetherium Mesh Node"
+  path: "WIDE1-1,WIDE2-1"
+
+# ── SDR ───────────────────────────────────────────────────────────────────────
+sdr:
+  gain: 40                        # RTL-SDR gain (0=auto, 20-50=typical)
+  ppm: 0                          # PPM frequency correction (calibrate with kalibrate-rtl)
+  enable_rtl433: true             # decode 433MHz IoT/weather sensors
+  enable_dump1090: true           # receive ADS-B aircraft transponders
+
+# ── Matrix Conduit ────────────────────────────────────────────────────────────
+matrix:
+  server_name: "aetherium.local"  # Matrix homeserver name
+  allow_registration: true        # allow new users to register
+
+# ── Tailscale ─────────────────────────────────────────────────────────────────
+tailscale:
+  auth_key: ""                    # get from tailscale.com/admin/settings/keys
+  # hostname: ""                  # defaults to node.name
+  # advertise_exit_node: false
+  # advertise_routes: ""          # e.g. "192.168.42.0/24"
+
+# ── Power Management ──────────────────────────────────────────────────────────
+power:
+  mode: "balanced"                # powersave|balanced|performance
+  disable_hdmi: false             # cuts ~25mA on Pi
+  disable_leds: false             # cuts ~5mA on Pi
+  disable_bluetooth: false        # cuts ~10mA on Pi
+
+# ── OTA Updates ───────────────────────────────────────────────────────────────
+ota:
+  signing_key: ""                 # path to GPG public key for update verification
+
+# ── Module overrides ──────────────────────────────────────────────────────────
+# Set module-specific options here. Profile defaults apply unless overridden.
+modules:
+  syncthing:
+    enabled: false
+  mumble:
+    enabled: false
+  monitoring:
+    enabled: false
+  matrix:
+    enabled: false
+  gitea:
+    enabled: false
+  tailscale:
+    enabled: false

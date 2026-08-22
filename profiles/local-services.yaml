@@ -1,0 +1,51 @@
+name: local-services
+description: "Local file sharing, offline content, and community services"
+
+node:
+  profile: local-services
+
+network:
+  ap_interface: auto
+  mesh_interface: auto
+  uplink_interface: auto
+  hotspot_subnet: "192.168.48.0/24"
+  hotspot_ip: "192.168.48.1"
+
+hotspot:
+  enabled: true
+  ssid: "AetherLocal"
+  channel: 6
+  band: "2.4GHz"
+  password: ""
+  captive_portal: true
+
+batman_adv:
+  enabled: false
+
+reticulum:
+  enabled: true
+  interfaces:
+    - type: AutoInterface
+      enabled: true
+
+lxmf:
+  enabled: true
+  propagation_node: false
+
+nftables:
+  enabled: true
+  policy: "field"
+
+modules:
+  - nftables
+  - hostapd
+  - dnsmasq
+  - reticulum
+  - lxmf
+  - captive-portal
+  - avahi
+  - syncthing
+  - mumble
+  - matrix
+  - gitea
+  - dashboard
