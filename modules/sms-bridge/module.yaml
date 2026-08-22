@@ -1,0 +1,14 @@
+name: sms-bridge
+version: "system"
+description: "SMS bridge — send/receive SMS via LTE modem using ModemManager/gammu, forward to LXMF"
+type: native
+service: aetherium-sms-bridge
+binary: python3
+requires_hardware: [lte_modem]
+depends: [lte, reticulum, lxmf]
+resource_budget:
+  cpu: "0.05"
+  memory: "20M"
+  disk: "10M"
+profiles_default_on: [lte-gateway]
+notes: "Requires LTE modem with SMS capability. Bridges SMS ↔ LXMF mesh messages."

@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  syncthing:
+    image: syncthing/syncthing:latest
+    container_name: aetherium-syncthing
+    hostname: ${NODE_NAME:-aetherium-node}
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - /var/lib/aetherium/syncthing:/var/syncthing
+      - /var/lib/aetherium/shared:/data/shared
+    ports:
+      - "8384:8384"      # web UI
+      - "22000:22000/tcp"  # sync protocol (TCP)
+      - "22000:22000/udp"  # sync protocol (QUIC)
+      - "21027:21027/udp"  # discovery broadcast
+    restart: unless-stopped
+    network_mode: host
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+    logging:
+      driver: journald
+      options:
+        tag: aetherium-syncthing

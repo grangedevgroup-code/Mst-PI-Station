@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: aetherium-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.listen-address=0.0.0.0:9090'
+    volumes:
+      - /var/lib/aetherium/prometheus:/prometheus
+      - /opt/aetherium/modules/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    network_mode: host
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 200M
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: aetherium-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=aetherium
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_HTTP_PORT=3000
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - /var/lib/aetherium/grafana:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    network_mode: host
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 200M
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: aetherium-node-exporter
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /:/host:ro,rslave
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 50M

@@ -1,0 +1,32 @@
+[Unit]
+Description=Reticulum Network Stack
+Documentation=https://reticulum.network
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=reticulum
+Group=reticulum
+ExecStart=/opt/aetherium/venv/bin/python3 -m RNS --config /etc/reticulum
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=reticulum
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/reticulum /etc/reticulum /var/log/aetherium
+PrivateTmp=true
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

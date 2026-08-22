@@ -1,0 +1,13 @@
+name: meshtastic
+version: "2.7.15"
+description: "Meshtastic — LoRa mesh radio bridge to Reticulum/LXMF and MQTT"
+type: native
+service: aetherium-meshtastic
+binary: meshtastic
+requires_hardware: []
+depends: [reticulum, lxmf]
+resource_budget:
+  cpu: "0.15"
+  memory: "64M"
+  disk: "50M"
+profiles_default_on: [relay, field-node, mesh-hub, emergency]

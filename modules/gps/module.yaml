@@ -1,0 +1,12 @@
+name: gps
+version: "system"
+description: "GPS — location awareness, time synchronization, and APRS positioning"
+type: native
+service: gpsd
+binary: gpsd
+requires_hardware: []
+resource_budget:
+  cpu: "0.02"
+  memory: "10M"
+  disk: "5M"
+profiles_default_on: [relay, field-node, mesh-hub, lte-gateway]

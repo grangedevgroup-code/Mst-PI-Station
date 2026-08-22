@@ -1,0 +1,12 @@
+name: monitoring
+version: "latest"
+description: "Prometheus + Grafana — node metrics and service health dashboards"
+type: container
+requires_hardware: []
+needs_docker: true
+min_ram_mb: 2048          # Prometheus + Grafana — defer on boards under 2 GB
+resource_budget:
+  cpu: "0.5"
+  memory: "400M"
+  disk: "2G"
+profiles_default_on: [mesh-hub]

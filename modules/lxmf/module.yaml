@@ -1,0 +1,13 @@
+name: lxmf
+version: "0.9.6"
+description: "LXMF — Lightweight Extensible Messaging Format over Reticulum"
+type: native
+service: aetherium-lxmf
+binary: lxmd
+requires_hardware: []
+depends: [reticulum]
+resource_budget:
+  cpu: "0.1"
+  memory: "32M"
+  disk: "200M"
+profiles_default_on: [relay, field-node, mesh-hub, lte-gateway, emergency, solar-relay, local-services]

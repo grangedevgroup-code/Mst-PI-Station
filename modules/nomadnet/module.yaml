@@ -1,0 +1,13 @@
+name: nomadnet
+version: "1.0.1"
+description: "NomadNet — resilient mesh-based darknet and node pages over Reticulum"
+type: native
+service: aetherium-nomadnet
+binary: nomadnet
+requires_hardware: []
+depends: [reticulum]
+resource_budget:
+  cpu: "0.1"
+  memory: "48M"
+  disk: "100M"
+profiles_default_on: [relay, mesh-hub]

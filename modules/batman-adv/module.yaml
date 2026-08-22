@@ -1,0 +1,12 @@
+name: batman-adv
+version: "main"
+description: "B.A.T.M.A.N. Advanced — kernel-level L2 mesh networking"
+type: native
+service: batman-adv
+binary: batctl
+requires_hardware: [wifi]
+resource_budget:
+  cpu: "0.05"
+  memory: "8M"
+  disk: "20M"
+profiles_default_on: [relay, field-node, mesh-hub, lte-gateway, emergency, solar-relay]

@@ -1,0 +1,12 @@
+name: wireguard
+version: "system"
+description: "WireGuard VPN — encrypted tunnels for remote node management"
+type: native
+service: wg-quick@aetherium
+binary: wg
+requires_hardware: []
+resource_budget:
+  cpu: "0.02"
+  memory: "5M"
+  disk: "5M"
+profiles_default_on: []
