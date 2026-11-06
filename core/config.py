@@ -10,8 +10,9 @@ CONFIG_DIR = Path("/etc/aetherium")
 CONFIG_FILE = CONFIG_DIR / "aetherium.yaml"
 HARDWARE_FILE = CONFIG_DIR / "hardware.yaml"
 INSTALL_DIR = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DEFAULTS_DIR = INSTALL_DIR / "config" / "defaults"
 HARDWARE_DEFAULTS_DIR = INSTALL_DIR / "config" / "hardware"
+# Single, model-agnostic tuning file applied identically to every device.
+HARDWARE_DEFAULTS_FILE = HARDWARE_DEFAULTS_DIR / "default.yaml"
 
 
 class Config:
@@ -120,21 +121,25 @@ class Config:
         """Check if a module is explicitly enabled in config."""
         return bool(self.get(f"modules.{module_name}.enabled", False))
 
+    def module_disabled(self, module_name: str) -> bool:
+        """True only if the user explicitly set ``modules.<name>.enabled: false``.
+
+        Distinct from "not mentioned": an unset module is governed by the
+        profile + runtime capability gating, not treated as disabled.
+        """
+        return self.get(f"modules.{module_name}.enabled", None) is False
+
     def load_hardware_defaults(self) -> Dict[str, Any]:
-        """Load hardware-specific config overrides."""
-        hw_file = HARDWARE_FILE
-        if not hw_file.exists():
-            return {}
-        with open(hw_file) as f:
-            hw = yaml.safe_load(f) or {}
+        """Load the single, model-agnostic hardware tuning file.
 
-        model = hw.get("model", "generic")
-        hw_defaults_file = HARDWARE_DEFAULTS_DIR / f"{model}.yaml"
-        if not hw_defaults_file.exists():
-            hw_defaults_file = HARDWARE_DEFAULTS_DIR / "generic.yaml"
-
-        if hw_defaults_file.exists():
-            with open(hw_defaults_file) as f:
+        Every device loads the SAME defaults. There are deliberately no
+        per-model files: per-device behaviour is decided at runtime by
+        capability detection (RAM / radios / attached hardware / docker) via
+        ``core.hardware`` and the ``min_ram_mb`` / ``needs_docker`` gating in
+        each ``module.yaml`` — not by separate config variants per board.
+        """
+        if HARDWARE_DEFAULTS_FILE.exists():
+            with open(HARDWARE_DEFAULTS_FILE) as f:
                 return yaml.safe_load(f) or {}
         return {}
 

@@ -127,11 +127,20 @@ class ModuleManager:
 
         meta = self._load_meta(name)
 
+        # ── Capability gating (identical logic on every device) ──────────────
+        # The same profile is deployed on every board; what a given board can
+        # actually run is decided HERE at runtime — never by per-model configs.
+        # A deferred module is a graceful no-op (returns success) so the rest of
+        # the stack still deploys; it can be enabled later when capable.
+        skip = self._capability_skip(name, meta)
+        if skip is not None:
+            return True, f"skipped ({skip})"
+
         # ── Hardware requirements ────────────────────────────────────────────
         hw_req = meta.get("requires_hardware", [])
         for req in hw_req:
             if req == "wifi" and not self.hardware.has_wifi:
-                return False, "requires Wi-Fi (not detected)"
+                return True, "skipped (no Wi-Fi interface)"
             if req in ("rnode", "rtl_sdr") and not self.hardware.has_rnode:
                 return True, f"skipped ({req} not detected)"
             if req in ("lte_modem", "lte") and not self.hardware.has_lte:
@@ -300,6 +309,46 @@ class ModuleManager:
             env["RNODE_FREQ"] = str(self.hardware.lora_frequency_for_region(hw_cc))
 
         return env
+
+    # ── Capability gating ─────────────────────────────────────────────────────
+
+    def _docker_available(self) -> bool:
+        """True only if a usable Docker engine is present (daemon reachable)."""
+        if not _which("docker"):
+            return False
+        try:
+            r = subprocess.run(["docker", "info"],
+                               capture_output=True, timeout=10)
+            return r.returncode == 0
+        except Exception:
+            return False
+
+    def _capability_skip(self, name: str, meta: Dict) -> Optional[str]:
+        """Return why this module must be deferred on the current device, or None.
+
+        Evaluated identically on every board so the same profile produces the
+        same intent everywhere and each device adapts to its own resources:
+          * explicit ``modules.<name>.enabled: false`` always wins;
+          * container modules require a working Docker engine;
+          * ``min_ram_mb`` (explicit, or a 1 GB default for containers) keeps
+            heavy services off boards that would OOM.
+        """
+        if self.config.module_disabled(name):
+            return "disabled in config"
+
+        mod_type = meta.get("type", "native")
+        is_container = mod_type in ("docker", "container") or bool(meta.get("needs_docker"))
+        if is_container and not self._docker_available():
+            return "needs Docker (not available on this device)"
+
+        min_ram = meta.get("min_ram_mb")
+        if min_ram is None and is_container:
+            min_ram = 1024            # default floor for any containerised service
+        ram = self.hardware.ram_mb
+        if min_ram and ram and ram < int(min_ram):
+            return f"needs {min_ram}MB RAM, device has {ram}MB"
+
+        return None
 
 
 def _which(binary: str) -> bool:

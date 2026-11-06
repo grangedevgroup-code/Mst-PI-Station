@@ -54,12 +54,7 @@ if [[ -n "${REGULATORY_DOMAIN}" ]] && [[ "${REGULATORY_DOMAIN}" != "00" ]]; then
 fi
 
 # ── Auto-select least-congested channel ─────────────────────────────────────
-if [[ "${CHANNEL}" == "auto" ]] || [[ "${CHANNEL}" == "0" ]]; then
-    log "Scanning for least-congested channel..."
-    CHANNEL=$(auto_select_channel "${AP_IFACE}" "${BAND}" || echo "6")
-    log "Auto-selected channel: ${CHANNEL}"
-fi
-
+# NOTE: this function must be defined BEFORE it is called below.
 auto_select_channel() {
     local iface="$1" band="$2"
     # Bring up interface briefly for scan (it may be down)
@@ -101,6 +96,12 @@ auto_select_channel() {
     done
     echo "${BEST_CH}"
 }
+
+if [[ "${CHANNEL}" == "auto" ]] || [[ "${CHANNEL}" == "0" ]]; then
+    log "Scanning for least-congested channel..."
+    CHANNEL=$(auto_select_channel "${AP_IFACE}" "${BAND}" || echo "6")
+    log "Auto-selected channel: ${CHANNEL}"
+fi
 
 # ── Stop conflicting services ────────────────────────────────────────────────
 systemctl stop "wpa_supplicant@${AP_IFACE}" 2>/dev/null || true

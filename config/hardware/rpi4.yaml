@@ -1,7 +1,0 @@
-# Raspberry Pi 4 hardware defaults
-network:
-  ap_interface: wlan0
-  mesh_interface: wlan1
-  uplink_interface: eth0
-power:
-  mode: balanced

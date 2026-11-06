@@ -46,6 +46,50 @@ logging.basicConfig(
 log = logging.getLogger("aetherium-agent")
 
 
+def discover_services(config, hardware) -> list:
+    """Systemd services to watch on THIS device, derived from the deployed
+    profile's module set.
+
+    Self-healing therefore covers exactly what the device actually runs — the
+    same agent logic adapts per device with zero per-model configuration.
+    Container modules are excluded (Docker manages their lifecycle), as are the
+    agent's own units (it must never try to restart itself).
+    """
+    from core.modules import ModuleManager
+    from core.profiles import ProfileManager
+
+    services: list = []
+    seen = set()
+
+    def _add(svc: str):
+        svc = str(svc or "").strip()
+        if svc and svc not in seen and svc not in ("aetherium-agent", "aetherium-watchdog"):
+            seen.add(svc)
+            services.append(svc)
+
+    try:
+        mm = ModuleManager(AETHERIUM_DIR, config, hardware)
+        pm = ProfileManager(AETHERIUM_DIR, config, hardware)
+        profile_name = config.get("node.profile")
+        profile = pm.load(profile_name) if profile_name else None
+        module_names = list((profile or {}).get("modules", []))
+        if not module_names:
+            module_names = [m["name"] for m in mm.list_modules()]
+        for name in module_names:
+            meta = mm._load_meta(name)
+            if meta.get("type", "native") in ("docker", "container"):
+                continue
+            svc = meta.get("service")
+            _add(svc if svc is not None else f"aetherium-{name}")
+    except Exception as e:
+        log.debug(f"service discovery failed: {e}")
+
+    if not services:   # safe fallback if discovery yields nothing
+        for svc in ("reticulum", "aetherium-hostapd", "batman-adv", "dnsmasq"):
+            _add(svc)
+    return services
+
+
 class ServiceWatchdog:
     """Watches systemd services and restarts them on failure."""
 
@@ -136,12 +180,32 @@ class NetworkFailover:
         except Exception:
             return False
 
-    def _set_default_route(self, iface: str):
+    def _gateway_for(self, iface: str) -> str:
+        """Best-effort next-hop for an interface (empty for point-to-point links)."""
         try:
-            subprocess.run(["ip", "route", "del", "default"], capture_output=True, check=False)
-            subprocess.run(["ip", "route", "add", "default", "dev", iface],
-                           capture_output=True, check=False)
-            log.info(f"Default route set via {iface}")
+            r = subprocess.run(["ip", "-j", "route", "show", "dev", iface],
+                               capture_output=True, text=True, timeout=5)
+            for rt in json.loads(r.stdout or "[]"):
+                if rt.get("gateway"):
+                    return rt["gateway"]
+        except Exception:
+            pass
+        return ""
+
+    def _set_default_route(self, iface: str):
+        # Use `ip route replace` (atomic) instead of del-all + add: this swaps
+        # only the default route and never strips unrelated routes. Ethernet
+        # needs a gateway; LTE/PPP links are point-to-point (no gateway).
+        gw = self._gateway_for(iface)
+        cmd = (["ip", "route", "replace", "default", "via", gw, "dev", iface]
+               if gw else
+               ["ip", "route", "replace", "default", "dev", iface])
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            if r.returncode == 0:
+                log.info(f"Default route set via {iface}" + (f" (gw {gw})" if gw else ""))
+            else:
+                log.error(f"Failed to set default route via {iface}: {r.stderr.strip()}")
         except Exception as e:
             log.error(f"Failed to set default route: {e}")
 
@@ -196,9 +260,10 @@ class PeerDiscovery:
 class StatusCollector:
     """Collects node health status and writes status.json."""
 
-    def __init__(self, config: Config, hardware: Hardware):
+    def __init__(self, config: Config, hardware: Hardware, services=None):
         self.config = config
         self.hardware = hardware
+        self.services = services or []
 
     def collect(self) -> Dict[str, Any]:
         status = {
@@ -269,9 +334,9 @@ class StatusCollector:
         return stats
 
     def _service_states(self) -> Dict[str, str]:
-        services = [
+        services = self.services or [
             "reticulum", "aetherium-hostapd", "batman-adv",
-            "dnsmasq", "aetherium-agent", "aetherium-lxmf"
+            "dnsmasq", "aetherium-lxmf"
         ]
         states = {}
         for svc in services:
@@ -326,22 +391,20 @@ class StatusCollector:
 class AetheriumAgent:
     """Main agent process."""
 
-    WATCHED_SERVICES = [
-        "reticulum",
-        "aetherium-hostapd",
-        "batman-adv",
-        "dnsmasq",
-    ]
-
-    def __init__(self):
+    def __init__(self, watchdog_only: bool = False):
         self.running = True
+        self.watchdog_only = watchdog_only
         self.config = Config()
         self.hardware = Hardware()
-        self.watchdog = ServiceWatchdog(self.WATCHED_SERVICES)
+        # Services to watch are derived from the deployed profile, so the same
+        # agent self-heals whatever THIS device runs (no per-model config).
+        self.services = discover_services(self.config, self.hardware)
+        self.watchdog = ServiceWatchdog(self.services)
         self.failover = NetworkFailover(self.config)
         self.peer_discovery = PeerDiscovery()
-        self.status_collector = StatusCollector(self.config, self.hardware)
+        self.status_collector = StatusCollector(self.config, self.hardware, self.services)
         self._setup_signal_handlers()
+        log.info(f"Watching {len(self.services)} service(s): {', '.join(self.services) or 'none'}")
 
     def _setup_signal_handlers(self):
         signal.signal(signal.SIGTERM, self._handle_signal)
@@ -356,14 +419,24 @@ class AetheriumAgent:
         log.info("SIGHUP received, reloading config")
         self.config = Config()
         self.hardware.reload()
+        # Re-derive the watch list in case the profile changed; keep the existing
+        # watchdog/collector objects so backoff state survives the reload.
+        self.services = discover_services(self.config, self.hardware)
+        self.watchdog.services = self.services
+        self.status_collector.config = self.config
+        self.status_collector.services = self.services
+        self.failover.config = self.config
+        log.info(f"Reloaded — watching {len(self.services)} service(s)")
 
     def run(self):
-        log.info(f"Aetherium agent starting — node: {self.config.get('node.name')}")
+        mode = "watchdog-only" if self.watchdog_only else "full"
+        log.info(f"Aetherium agent starting ({mode}) — node: {self.config.get('node.name')}")
         self._write_pid()
 
-        # Initial status write
-        status = self.status_collector.collect()
-        self.status_collector.write(status)
+        # Initial status write (full mode only)
+        if not self.watchdog_only:
+            status = self.status_collector.collect()
+            self.status_collector.write(status)
 
         last_health = 0.0
         last_failover = 0.0
@@ -373,22 +446,30 @@ class AetheriumAgent:
             now = time.time()
 
             if now - last_health >= HEALTH_CHECK_INTERVAL:
-                self._run_health_check()
+                if self.watchdog_only:
+                    # Secondary healer: restart failed units only, nothing else.
+                    try:
+                        self.watchdog.check_and_heal()
+                    except Exception as e:
+                        log.error(f"Watchdog error: {e}")
+                else:
+                    self._run_health_check()
                 last_health = now
 
-            if now - last_failover >= FAILOVER_CHECK_INTERVAL:
-                try:
-                    self.failover.check_and_failover()
-                except Exception as e:
-                    log.error(f"Failover check error: {e}")
-                last_failover = now
+            if not self.watchdog_only:
+                if now - last_failover >= FAILOVER_CHECK_INTERVAL:
+                    try:
+                        self.failover.check_and_failover()
+                    except Exception as e:
+                        log.error(f"Failover check error: {e}")
+                    last_failover = now
 
-            if now - last_peers >= PEER_DISCOVERY_INTERVAL:
-                try:
-                    self.peer_discovery.scan()
-                except Exception as e:
-                    log.debug(f"Peer scan error: {e}")
-                last_peers = now
+                if now - last_peers >= PEER_DISCOVERY_INTERVAL:
+                    try:
+                        self.peer_discovery.scan()
+                    except Exception as e:
+                        log.debug(f"Peer scan error: {e}")
+                    last_peers = now
 
             time.sleep(5)
 
@@ -417,11 +498,26 @@ class AetheriumAgent:
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(prog="aetherium-agent",
+                                     description="Aetherium node agent / watchdog")
+    parser.add_argument("--watchdog-only", action="store_true",
+                        help="Run only the service self-healer (no status/failover/peer scan)")
+    parser.add_argument("--once", action="store_true",
+                        help="Run a single pass and exit (useful for cron/testing)")
+    args = parser.parse_args()
+
     # Ensure runtime dirs exist
     for d in [STATUS_FILE.parent, LOG_FILE.parent, PEERS_FILE.parent]:
         d.mkdir(parents=True, exist_ok=True)
 
-    agent = AetheriumAgent()
+    agent = AetheriumAgent(watchdog_only=args.watchdog_only)
+    if args.once:
+        if args.watchdog_only:
+            agent.watchdog.check_and_heal()
+        else:
+            agent._run_health_check()
+        return
     agent.run()
 
 

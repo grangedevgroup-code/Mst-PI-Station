@@ -5,6 +5,8 @@ type: docker
 service: aetherium-matrix
 binary: docker
 requires_hardware: []
+needs_docker: true
+min_ram_mb: 1024          # defer on boards under 1 GB
 resource_budget:
   cpu: "0.10"
   memory: "60M"

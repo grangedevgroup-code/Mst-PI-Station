@@ -1,7 +1,0 @@
-# Generic hardware defaults (x86_64, unknown ARM boards)
-network:
-  ap_interface: wlan0
-  mesh_interface: wlan0           # single-radio fallback
-  uplink_interface: eth0
-power:
-  mode: balanced

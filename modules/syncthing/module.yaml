@@ -3,6 +3,8 @@ version: "latest"
 description: "Syncthing — continuous peer-to-peer file synchronization across mesh nodes"
 type: container
 requires_hardware: []
+needs_docker: true
+min_ram_mb: 512           # light enough for a 512 MB board
 resource_budget:
   cpu: "0.3"
   memory: "128M"

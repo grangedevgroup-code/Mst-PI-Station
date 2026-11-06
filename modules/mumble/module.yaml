@@ -3,6 +3,8 @@ version: "latest"
 description: "Mumble — low-latency encrypted voice over mesh LAN"
 type: container
 requires_hardware: []
+needs_docker: true
+min_ram_mb: 512           # light enough for a 512 MB board
 resource_budget:
   cpu: "0.2"
   memory: "50M"

@@ -137,7 +137,10 @@ def deploy(ctx, profile, dry_run, skip_modules, force):
                 continue
 
             success, msg = mm.deploy_module(module_name, profile_def)
-            if success:
+            if success and msg.startswith("skipped"):
+                # Same profile on every device — this board defers what it can't run.
+                console.print(f"  [yellow]⏭[/yellow]  [dim]{module_name} — {msg}[/dim]")
+            elif success:
                 console.print(f"  [green]✓[/green] {module_name}")
             else:
                 console.print(f"  [red]✗[/red] {module_name}: {msg}")
@@ -507,25 +510,35 @@ def update(check):
         console.print("[red][✗] Requires root.[/red]")
         sys.exit(1)
 
+    def git(*args):
+        return subprocess.run(["git", *args], cwd=str(INSTALL_DIR),
+                              capture_output=True, text=True)
+
+    # Resolve the upstream tracking branch — never assume 'main' vs 'master'.
+    upstream = git("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}").stdout.strip()
+    if not upstream:
+        head = git("symbolic-ref", "--short", "refs/remotes/origin/HEAD").stdout.strip()
+        upstream = head or "origin/HEAD"
+
     console.print("[cyan]Checking for updates...[/cyan]")
-    result = subprocess.run(
-        ["git", "fetch", "--dry-run" if check else ""],
-        cwd=str(INSTALL_DIR), capture_output=True, text=True
-    )
+    fetch = git("fetch", "--dry-run") if check else git("fetch", "--quiet")
+    if fetch.returncode != 0 and fetch.stderr.strip():
+        console.print(f"[yellow]⚠ git fetch: {fetch.stderr.strip()}[/yellow]")
 
     if check:
-        behind = subprocess.run(
-            ["git", "rev-list", "--count", "HEAD..origin/main"],
-            cwd=str(INSTALL_DIR), capture_output=True, text=True
-        )
+        behind = git("rev-list", "--count", f"HEAD..{upstream}")
         count = behind.stdout.strip()
-        if count and int(count) > 0:
-            console.print(f"[yellow]{count} update(s) available.[/yellow] Run: sudo aetherium update")
+        if count.isdigit() and int(count) > 0:
+            console.print(f"[yellow]{count} update(s) available on {upstream}.[/yellow] Run: sudo aetherium update")
         else:
             console.print("[green]✓[/green] Aetherium is up to date")
     else:
-        subprocess.run(["git", "pull", "--ff-only"], cwd=str(INSTALL_DIR))
-        console.print("[green]✓[/green] Update complete. Run 'sudo aetherium deploy' to apply.")
+        pull = git("pull", "--ff-only")
+        if pull.returncode == 0:
+            console.print("[green]✓[/green] Update complete. Run 'sudo aetherium deploy' to apply.")
+        else:
+            console.print(f"[red]✗ Update failed:[/red] {pull.stderr.strip() or pull.stdout.strip()}")
+            sys.exit(1)
 
 
 # ── fleet ─────────────────────────────────────────────────────────────────────

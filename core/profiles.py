@@ -20,7 +20,22 @@ class ProfileManager:
         self.hardware = hardware
 
     def load(self, name: str) -> Optional[Dict[str, Any]]:
-        """Load and resolve a profile, merging hardware capabilities."""
+        """Load and resolve a profile.
+
+        Resolution order (later wins):
+          1. profile YAML — the role definition, identical on every device
+          2. site + unified hardware config from ``Config.merged()``
+          3. runtime interface resolution — turns "auto"/empty into real ifaces
+
+        Site config is merged for every top-level section EXCEPT ``modules``:
+        a profile's ``modules`` is an ordered deploy *list*, while the site
+        ``modules`` is a per-module options *dict* — deep-merging the two would
+        clobber the deploy list. (Per-module enable/disable is honoured by the
+        deployer via ``Config.module_enabled``/``module_disabled``.)
+
+        Interface resolution runs LAST so a site value of "auto" can never
+        overwrite an interface we already resolved from detected hardware.
+        """
         profile_file = self.profiles_dir / f"{name}.yaml"
         if not profile_file.exists():
             return None
@@ -28,25 +43,26 @@ class ProfileManager:
         with open(profile_file) as f:
             profile = yaml.safe_load(f) or {}
 
-        # Auto-fill interface assignments from hardware
+        # 2. Merge site + unified hardware config over the profile (site wins),
+        #    preserving the profile's ordered 'modules' deploy list.
+        deploy_modules = profile.get("modules")
+        site_cfg = self.config.merged()
+        _deep_merge(profile, {k: v for k, v in site_cfg.items() if k != "modules"})
+        if deploy_modules is not None:
+            profile["modules"] = deploy_modules
+
+        # 3. Resolve interfaces from detected hardware (model-agnostic). Single-
+        #    radio devices fall back to sharing the AP radio for mesh.
         suggested = self.hardware.suggested_interfaces()
         net = profile.setdefault("network", {})
-
-        if net.get("ap_interface") == "auto" or not net.get("ap_interface"):
+        if net.get("ap_interface") in (None, "", "auto"):
             net["ap_interface"] = suggested["ap"] or "wlan0"
-        if net.get("mesh_interface") == "auto" or not net.get("mesh_interface"):
-            net["mesh_interface"] = suggested["mesh"] or "wlan0"
-        if net.get("uplink_interface") == "auto" or not net.get("uplink_interface"):
+        if net.get("mesh_interface") in (None, "", "auto"):
+            net["mesh_interface"] = suggested["mesh"] or net["ap_interface"]
+        if net.get("uplink_interface") in (None, "", "auto"):
             net["uplink_interface"] = suggested["uplink"] or "eth0"
 
-        # Override with site config
-        site_cfg = self.config.merged()
-        _deep_merge(profile, {
-            k: v for k, v in site_cfg.items()
-            if k in ("node", "network", "hotspot", "reticulum", "batman_adv")
-        })
-
-        # Inject hardware-detected devices
+        # Inject hardware-detected RNode device if the profile didn't pin one.
         if suggested["first_rnode"]:
             rn = profile.setdefault("rnode", {})
             if not rn.get("port"):

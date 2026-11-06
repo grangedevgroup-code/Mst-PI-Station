@@ -101,14 +101,14 @@ source_installer() {
 install_deps() {
     info "Installing system dependencies..."
     local pkgs_debian=("python3" "python3-pip" "python3-venv" "python3-jinja2"
-                       "python3-yaml" "git" "curl" "wget" "jq" "iproute2"
+                       "python3-yaml" "git" "curl" "wget" "jq" "rsync" "iproute2"
                        "net-tools" "wireless-tools" "iw" "rfkill")
     local pkgs_fedora=("python3" "python3-pip" "python3-jinja2" "python3-pyyaml"
-                       "git" "curl" "wget" "jq" "iproute" "net-tools"
+                       "git" "curl" "wget" "jq" "rsync" "iproute" "net-tools"
                        "wireless-tools" "iw" "rfkill")
     local pkgs_arch=("python" "python-pip" "python-jinja" "python-yaml"
                      "git" "curl" "wget" "jq" "iproute2" "net-tools"
-                     "wireless_tools" "iw" "rfkill")
+                     "wireless_tools" "iw" "rfkill" "rsync")
 
     case "${DISTRO_FAMILY}" in
         debian)
@@ -148,8 +148,17 @@ setup_venv() {
 install_files() {
     info "Installing Aetherium to ${AETHERIUM_INSTALL_DIR}..."
     if [[ "${SCRIPT_DIR}" != "${AETHERIUM_INSTALL_DIR}" ]]; then
-        rsync -a --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' \
-            "${SCRIPT_DIR}/" "${AETHERIUM_INSTALL_DIR}/"
+        if command -v rsync &>/dev/null; then
+            rsync -a --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' \
+                "${SCRIPT_DIR}/" "${AETHERIUM_INSTALL_DIR}/"
+        else
+            # Fallback when rsync is unavailable (e.g. minimal OpenWrt images)
+            mkdir -p "${AETHERIUM_INSTALL_DIR}"
+            cp -a "${SCRIPT_DIR}/." "${AETHERIUM_INSTALL_DIR}/"
+            rm -rf "${AETHERIUM_INSTALL_DIR}/.git" 2>/dev/null || true
+            find "${AETHERIUM_INSTALL_DIR}" -name '__pycache__' -type d -prune \
+                -exec rm -rf {} + 2>/dev/null || true
+        fi
     fi
 
     # Create runtime directories
