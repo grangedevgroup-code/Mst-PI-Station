@@ -1,3 +1,5 @@
+> **Proprietary and confidential.** Copyright (c) 2026 Grange Dev Group. All rights reserved. This is not open source: you may not use, copy, build, modify, share, recreate or re-implement this code, or use it to train or prompt AI systems, even if you can see it. See [LICENSE](LICENSE).
+
 # Aetherium
 
 **Resilient Mesh Communications Stack for Field Deployments**
