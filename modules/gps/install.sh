@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
 
 log() { echo "[gps] $*"; }
 
@@ -18,7 +18,7 @@ esac
 "${VENV}/bin/pip" install --quiet gps3 2>/dev/null || true
 
 # udev rules for common GPS devices
-cat > /etc/udev/rules.d/99-aetherium-gps.rules << 'UDEV'
+cat > /etc/udev/rules.d/99-mstpistation-gps.rules << 'UDEV'
 # GPS receiver rules
 
 # u-blox GPS (common, used in many Pi HATs)
@@ -44,7 +44,7 @@ UDEV
 udevadm control --reload-rules 2>/dev/null || true
 
 # Chrony config for GPS-disciplined time
-cat > /etc/chrony/conf.d/aetherium-gps.conf << CHRONY
+cat > /etc/chrony/conf.d/mstpistation-gps.conf << CHRONY
 # GPS time source via gpsd
 refclock SHM 0 refid GPS precision 1e-1 offset 0.9999 delay 0.2 trust
 refclock SHM 2 refid PPS precision 1e-9 prefer

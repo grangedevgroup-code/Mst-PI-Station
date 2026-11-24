@@ -3,15 +3,15 @@ version: "3.8"
 services:
   prometheus:
     image: prom/prometheus:latest
-    container_name: aetherium-prometheus
+    container_name: mstpistation-prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=7d'
       - '--web.listen-address=0.0.0.0:9090'
     volumes:
-      - /var/lib/aetherium/prometheus:/prometheus
-      - /opt/aetherium/modules/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /var/lib/mstpistation/prometheus:/prometheus
+      - /opt/mstpistation/modules/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "9090:9090"
     restart: unless-stopped
@@ -24,15 +24,15 @@ services:
 
   grafana:
     image: grafana/grafana-oss:latest
-    container_name: aetherium-grafana
+    container_name: mstpistation-grafana
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=aetherium
+      - GF_SECURITY_ADMIN_PASSWORD=mstpistation
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_HTTP_PORT=3000
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
     volumes:
-      - /var/lib/aetherium/grafana:/var/lib/grafana
+      - /var/lib/mstpistation/grafana:/var/lib/grafana
     ports:
       - "3000:3000"
     restart: unless-stopped
@@ -47,7 +47,7 @@ services:
 
   node-exporter:
     image: prom/node-exporter:latest
-    container_name: aetherium-node-exporter
+    container_name: mstpistation-node-exporter
     command:
       - '--path.rootfs=/host'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'

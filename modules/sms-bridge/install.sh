@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
 
 log() { echo "[sms-bridge] $*"; }
 
@@ -27,22 +27,22 @@ esac
 systemctl enable ModemManager 2>/dev/null || true
 systemctl start ModemManager || true
 
-mkdir -p /var/lib/aetherium/sms /var/log/aetherium/sms-bridge
+mkdir -p /var/lib/mstpistation/sms /var/log/mstpistation/sms-bridge
 
 # SMS bridge systemd service
-cat > /etc/systemd/system/aetherium-sms-bridge.service << SVC
+cat > /etc/systemd/system/mstpistation-sms-bridge.service << SVC
 [Unit]
-Description=Aetherium SMS ↔ LXMF Bridge
-After=network.target ModemManager.service reticulum.service aetherium-lxmf.service
+Description=Mst-PI-Station SMS ↔ LXMF Bridge
+After=network.target ModemManager.service reticulum.service mstpistation-lxmf.service
 Wants=ModemManager.service
 
 [Service]
 Type=simple
-User=aetherium
-ExecStart=${VENV}/bin/python3 ${AETHERIUM_DIR}/modules/sms-bridge/bridge.py
+User=mstpistation
+ExecStart=${VENV}/bin/python3 ${MSTPISTATION_DIR}/modules/sms-bridge/bridge.py
 Restart=on-failure
 RestartSec=15
-Environment=AETHERIUM_DIR=${AETHERIUM_DIR}
+Environment=MSTPISTATION_DIR=${MSTPISTATION_DIR}
 StandardOutput=journal
 StandardError=journal
 

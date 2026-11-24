@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 log() { echo "[hostapd] $*"; }
 
@@ -35,9 +35,9 @@ fi
 # Stop wpa_supplicant on the AP interface — it conflicts with hostapd
 systemctl stop wpa_supplicant 2>/dev/null || true
 
-# Install Aetherium hostapd systemd service
-install -m644 "${MODULE_DIR}/systemd/aetherium-hostapd.service" /etc/systemd/system/
+# Install Mst-PI-Station hostapd systemd service
+install -m644 "${MODULE_DIR}/systemd/mstpistation-hostapd.service" /etc/systemd/system/
 systemctl daemon-reload
 
-mkdir -p /etc/aetherium/hostapd
+mkdir -p /etc/mstpistation/hostapd
 log "hostapd installation complete"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 log() { echo "[wireguard] $*"; }
 
@@ -12,7 +12,7 @@ case "${DISTRO_FAMILY}" in
 esac
 
 # Generate keypair if not already present
-WG_DIR="/etc/aetherium/wireguard"
+WG_DIR="/etc/mstpistation/wireguard"
 mkdir -p "${WG_DIR}"
 chmod 700 "${WG_DIR}"
 

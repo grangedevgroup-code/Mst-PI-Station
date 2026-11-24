@@ -1,4 +1,4 @@
-"""Module management for Aetherium."""
+"""Module management for Mst-PI-Station."""
 
 import os
 import subprocess
@@ -42,12 +42,12 @@ class ModuleManager:
         """Determine current module status."""
         mod_type = meta.get("type", "native")
         if mod_type == "native":
-            service = meta.get("service", f"aetherium-{name}")
+            service = meta.get("service", f"mstpistation-{name}")
             return self.get_service_status(service)
         elif mod_type in ("docker", "container"):
             return self._get_container_status(name)
         elif mod_type == "both":
-            native_svc = meta.get("service", f"aetherium-{name}")
+            native_svc = meta.get("service", f"mstpistation-{name}")
             if self.get_service_status(native_svc) == "active":
                 return "active"
             return self._get_container_status(name)
@@ -192,7 +192,7 @@ class ModuleManager:
         mod_type = meta.get("type", "native")
 
         if mod_type in ("native", "both"):
-            service = meta.get("service", f"aetherium-{name}")
+            service = meta.get("service", f"mstpistation-{name}")
             try:
                 subprocess.run(["systemctl", "stop", service], check=False, timeout=15)
                 subprocess.run(["systemctl", "disable", service], check=False, timeout=10)
@@ -223,10 +223,10 @@ class ModuleManager:
                     profile: Dict, env: Optional[Dict] = None) -> Tuple[bool, str]:
         run_env = os.environ.copy()
         run_env.update({
-            "AETHERIUM_DIR": str(self.install_dir),
-            "AETHERIUM_CONFIG_DIR": "/etc/aetherium",
-            "AETHERIUM_DATA_DIR": "/var/lib/aetherium",
-            "AETHERIUM_LOG_DIR": "/var/log/aetherium",
+            "MSTPISTATION_DIR": str(self.install_dir),
+            "MSTPISTATION_CONFIG_DIR": "/etc/mstpistation",
+            "MSTPISTATION_DATA_DIR": "/var/lib/mstpistation",
+            "MSTPISTATION_LOG_DIR": "/var/log/mstpistation",
             "MODULE_NAME": module_name,
             "MODULE_DIR": str(self.modules_dir / module_name),
             "TEMPLATES_DIR": str(self.install_dir / "templates"),
@@ -261,7 +261,7 @@ class ModuleManager:
         env["HOTSPOT_IP"]      = net.get("hotspot_ip") or "192.168.42.1"
 
         hs = profile.get("hotspot", {})
-        env["HOTSPOT_SSID"]     = hs.get("ssid") or "Aetherium"
+        env["HOTSPOT_SSID"]     = hs.get("ssid") or "Mst-PI-Station"
         env["HOTSPOT_CHANNEL"]  = str(hs.get("channel") or 6)
         env["HOTSPOT_BAND"]     = hs.get("band") or "2.4GHz"
         env["HOTSPOT_PASSWORD"] = hs.get("password") or ""
@@ -273,7 +273,7 @@ class ModuleManager:
         env["NODE_NAME"]    = (node.get("name") or
                                self.config.get("node.name") or
                                os.uname().nodename or
-                               "aetherium-node")
+                               "mstpistation-node")
         env["NODE_PROFILE"] = node.get("profile") or "relay"
 
         rns = profile.get("reticulum", {})

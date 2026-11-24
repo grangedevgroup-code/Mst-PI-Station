@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
-TEMPLATES_DIR="${TEMPLATES_DIR:-${AETHERIUM_DIR}/templates}"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
+TEMPLATES_DIR="${TEMPLATES_DIR:-${MSTPISTATION_DIR}/templates}"
 AP_IFACE="${AP_INTERFACE:-wlan0}"
-SSID="${HOTSPOT_SSID:-Aetherium}"
+SSID="${HOTSPOT_SSID:-Mst-PI-Station}"
 CHANNEL="${HOTSPOT_CHANNEL:-auto}"
 BAND="${HOTSPOT_BAND:-2.4GHz}"
 PASSWORD="${HOTSPOT_PASSWORD:-}"
@@ -113,7 +113,7 @@ fi
 
 # ── NetworkManager unmanage (skip if NM not running) ────────────────────────
 if systemctl is-active NetworkManager &>/dev/null 2>&1 || command -v nmcli &>/dev/null; then
-    NM_CONF="/etc/NetworkManager/conf.d/aetherium-unmanaged.conf"
+    NM_CONF="/etc/NetworkManager/conf.d/mstpistation-unmanaged.conf"
     mkdir -p /etc/NetworkManager/conf.d
     if [[ -f "${NM_CONF}" ]]; then
         grep -q "interface-name:${AP_IFACE}" "${NM_CONF}" || \
@@ -129,7 +129,7 @@ fi
 
 # For systemd-networkd systems: write a .network file that ignores this interface
 if [[ -d /etc/systemd/network ]] && ! systemctl is-active NetworkManager &>/dev/null 2>&1; then
-    cat > "/etc/systemd/network/10-aetherium-ap-${AP_IFACE}.network" << NETD
+    cat > "/etc/systemd/network/10-mstpistation-ap-${AP_IFACE}.network" << NETD
 [Match]
 Name=${AP_IFACE}
 
@@ -149,7 +149,7 @@ ip addr add "${HOTSPOT_IP:-192.168.42.1}/24" dev "${AP_IFACE}"
 # ── Render hostapd config ────────────────────────────────────────────────────
 "${VENV}/bin/python3" << PYEOF
 import sys
-sys.path.insert(0, "${AETHERIUM_DIR}")
+sys.path.insert(0, "${MSTPISTATION_DIR}")
 from jinja2 import Environment, FileSystemLoader
 
 env = Environment(loader=FileSystemLoader("${TEMPLATES_DIR}"))
@@ -166,21 +166,21 @@ ctx = {
     "max_clients":  50,
 }
 output = tmpl.render(**ctx)
-with open("/etc/aetherium/hostapd/hostapd.conf", "w") as f:
+with open("/etc/mstpistation/hostapd/hostapd.conf", "w") as f:
     f.write(output)
-print("Wrote /etc/aetherium/hostapd/hostapd.conf")
+print("Wrote /etc/mstpistation/hostapd/hostapd.conf")
 PYEOF
 
-chmod 600 /etc/aetherium/hostapd/hostapd.conf
+chmod 600 /etc/mstpistation/hostapd/hostapd.conf
 
-systemctl enable aetherium-hostapd 2>/dev/null || true
-systemctl restart aetherium-hostapd || true
+systemctl enable mstpistation-hostapd 2>/dev/null || true
+systemctl restart mstpistation-hostapd || true
 sleep 3
 
-if systemctl is-active aetherium-hostapd &>/dev/null; then
+if systemctl is-active mstpistation-hostapd &>/dev/null; then
     log "hostapd running — SSID: ${SSID} | iface: ${AP_IFACE} | channel: ${CHANNEL}${REGULATORY_DOMAIN:+ | country: ${REGULATORY_DOMAIN}}"
 else
     log "WARNING: hostapd failed to start."
-    log "Diagnose: journalctl -u aetherium-hostapd"
+    log "Diagnose: journalctl -u mstpistation-hostapd"
     log "AP mode check: iw phy ${PHY:-phy0} info | grep -A10 'Supported interface modes'"
 fi

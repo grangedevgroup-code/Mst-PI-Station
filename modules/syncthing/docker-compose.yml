@@ -3,14 +3,14 @@ version: "3.8"
 services:
   syncthing:
     image: syncthing/syncthing:latest
-    container_name: aetherium-syncthing
-    hostname: ${NODE_NAME:-aetherium-node}
+    container_name: mstpistation-syncthing
+    hostname: ${NODE_NAME:-mstpistation-node}
     environment:
       - PUID=1000
       - PGID=1000
     volumes:
-      - /var/lib/aetherium/syncthing:/var/syncthing
-      - /var/lib/aetherium/shared:/data/shared
+      - /var/lib/mstpistation/syncthing:/var/syncthing
+      - /var/lib/mstpistation/shared:/data/shared
     ports:
       - "8384:8384"      # web UI
       - "22000:22000/tcp"  # sync protocol (TCP)
@@ -26,4 +26,4 @@ services:
     logging:
       driver: journald
       options:
-        tag: aetherium-syncthing
+        tag: mstpistation-syncthing

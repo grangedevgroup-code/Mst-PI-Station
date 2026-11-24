@@ -2,7 +2,7 @@ name: sms-bridge
 version: "system"
 description: "SMS bridge — send/receive SMS via LTE modem using ModemManager/gammu, forward to LXMF"
 type: native
-service: aetherium-sms-bridge
+service: mstpistation-sms-bridge
 binary: python3
 requires_hardware: [lte_modem]
 depends: [lte, reticulum, lxmf]

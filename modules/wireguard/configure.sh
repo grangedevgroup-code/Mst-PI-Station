@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
-TEMPLATES_DIR="${TEMPLATES_DIR:-${AETHERIUM_DIR}/templates}"
-WG_DIR="/etc/aetherium/wireguard"
-WG_CONF="/etc/wireguard/aetherium.conf"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
+TEMPLATES_DIR="${TEMPLATES_DIR:-${MSTPISTATION_DIR}/templates}"
+WG_DIR="/etc/mstpistation/wireguard"
+WG_CONF="/etc/wireguard/mstpistation.conf"
 
 log() { echo "[wireguard/configure] $*"; }
 
@@ -23,19 +23,19 @@ WG_PRIVATE_KEY=$(cat "${WG_DIR}/private.key")
 # Load site config for WireGuard settings
 WG_ADDRESS=$(python3 -c "
 import yaml, sys
-cfg = yaml.safe_load(open('/etc/aetherium/aetherium.yaml')) if __import__('os').path.exists('/etc/aetherium/aetherium.yaml') else {}
+cfg = yaml.safe_load(open('/etc/mstpistation/mstpistation.yaml')) if __import__('os').path.exists('/etc/mstpistation/mstpistation.yaml') else {}
 print(cfg.get('wireguard', {}).get('address', '10.10.0.1/24'))
 ")
 WG_PORT=$(python3 -c "
 import yaml
-cfg = yaml.safe_load(open('/etc/aetherium/aetherium.yaml')) if __import__('os').path.exists('/etc/aetherium/aetherium.yaml') else {}
+cfg = yaml.safe_load(open('/etc/mstpistation/mstpistation.yaml')) if __import__('os').path.exists('/etc/mstpistation/mstpistation.yaml') else {}
 print(cfg.get('wireguard', {}).get('port', 51820))
 ")
 
 # Render config
 "${VENV}/bin/python3" << PYEOF
 import sys, yaml
-sys.path.insert(0, "${AETHERIUM_DIR}")
+sys.path.insert(0, "${MSTPISTATION_DIR}")
 from jinja2 import Environment, FileSystemLoader
 
 env = Environment(loader=FileSystemLoader("${TEMPLATES_DIR}"))
@@ -44,7 +44,7 @@ tmpl = env.get_template("wireguard.conf.j2")
 # Load peers from config
 cfg = {}
 try:
-    with open("/etc/aetherium/aetherium.yaml") as f:
+    with open("/etc/mstpistation/mstpistation.yaml") as f:
         cfg = yaml.safe_load(f) or {}
 except Exception:
     pass
@@ -71,13 +71,13 @@ PYEOF
 
 # Enable and start
 if command -v systemctl &>/dev/null; then
-    systemctl enable wg-quick@aetherium 2>/dev/null || true
-    systemctl restart wg-quick@aetherium || true
+    systemctl enable wg-quick@mstpistation 2>/dev/null || true
+    systemctl restart wg-quick@mstpistation || true
     sleep 1
-    if systemctl is-active wg-quick@aetherium &>/dev/null; then
+    if systemctl is-active wg-quick@mstpistation &>/dev/null; then
         log "WireGuard tunnel up (${WG_ADDRESS})"
     else
-        log "WireGuard not active — add peers to /etc/aetherium/aetherium.yaml wireguard.peers"
+        log "WireGuard not active — add peers to /etc/mstpistation/mstpistation.yaml wireguard.peers"
     fi
 fi
 

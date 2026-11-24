@@ -2,12 +2,12 @@ version: "3.8"
 services:
   conduit:
     image: matrixconduit/matrix-conduit:latest
-    container_name: aetherium-matrix
+    container_name: mstpistation-matrix
     restart: unless-stopped
     volumes:
-      - /var/lib/aetherium/matrix:/var/lib/matrix-conduit
+      - /var/lib/mstpistation/matrix:/var/lib/matrix-conduit
     environment:
-      CONDUIT_SERVER_NAME: "aetherium.local"
+      CONDUIT_SERVER_NAME: "mstpistation.local"
       CONDUIT_DATABASE_PATH: "/var/lib/matrix-conduit/conduit.db"
       CONDUIT_DATABASE_BACKEND: "rocksdb"
       CONDUIT_PORT: "6167"

@@ -2,25 +2,25 @@ version: "3.8"
 services:
   gitea:
     image: gitea/gitea:latest-rootless
-    container_name: aetherium-gitea
+    container_name: mstpistation-gitea
     restart: unless-stopped
     environment:
       - USER_UID=1000
       - USER_GID=1000
       - GITEA__database__DB_TYPE=sqlite3
       - GITEA__database__PATH=/data/gitea/gitea.db
-      - GITEA__server__DOMAIN=aetherium.local
+      - GITEA__server__DOMAIN=mstpistation.local
       - GITEA__server__HTTP_PORT=3000
-      - GITEA__server__ROOT_URL=http://aetherium.local:3000
-      - GITEA__server__SSH_DOMAIN=aetherium.local
+      - GITEA__server__ROOT_URL=http://mstpistation.local:3000
+      - GITEA__server__SSH_DOMAIN=mstpistation.local
       - GITEA__server__SSH_PORT=2222
       - GITEA__service__DISABLE_REGISTRATION=false
       - GITEA__service__REQUIRE_SIGNIN_VIEW=false
       - GITEA__log__MODE=console
       - GITEA__log__LEVEL=warn
     volumes:
-      - /var/lib/aetherium/gitea/data:/data
-      - /var/lib/aetherium/gitea/config:/etc/gitea
+      - /var/lib/mstpistation/gitea/data:/data
+      - /var/lib/mstpistation/gitea/config:/etc/gitea
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     ports:

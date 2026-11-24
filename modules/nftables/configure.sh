@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
-TEMPLATES_DIR="${TEMPLATES_DIR:-${AETHERIUM_DIR}/templates}"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
+TEMPLATES_DIR="${TEMPLATES_DIR:-${MSTPISTATION_DIR}/templates}"
 AP_IFACE="${AP_INTERFACE:-wlan0}"
 MESH_IFACE="${MESH_INTERFACE:-wlan0}"
 UPLINK_IFACE="${UPLINK_INTERFACE:-eth0}"
@@ -21,7 +21,7 @@ fi
 
 "${VENV}/bin/python3" << PYEOF
 import sys
-sys.path.insert(0, "${AETHERIUM_DIR}")
+sys.path.insert(0, "${MSTPISTATION_DIR}")
 from jinja2 import Environment, FileSystemLoader
 
 env = Environment(loader=FileSystemLoader("${TEMPLATES_DIR}"))
@@ -37,26 +37,26 @@ ctx = {
     "wireguard_port":   51820,
 }
 output = tmpl.render(**ctx)
-with open("/etc/aetherium/nftables.conf", "w") as f:
+with open("/etc/mstpistation/nftables.conf", "w") as f:
     f.write(output)
-print("Wrote /etc/aetherium/nftables.conf")
+print("Wrote /etc/mstpistation/nftables.conf")
 PYEOF
 
 # Test config before applying
-if nft -f /etc/aetherium/nftables.conf --check 2>/dev/null; then
-    nft -f /etc/aetherium/nftables.conf
+if nft -f /etc/mstpistation/nftables.conf --check 2>/dev/null; then
+    nft -f /etc/mstpistation/nftables.conf
     log "nftables rules applied (policy=${POLICY})"
 else
-    log "WARNING: nftables config test failed. Check /etc/aetherium/nftables.conf"
+    log "WARNING: nftables config test failed. Check /etc/mstpistation/nftables.conf"
     log "Not applying failed ruleset — system may be unprotected"
 fi
 
 # Persist on boot via systemd-nftables override
 mkdir -p /etc/systemd/system/nftables.service.d/
-cat > /etc/systemd/system/nftables.service.d/aetherium.conf << DROP
+cat > /etc/systemd/system/nftables.service.d/mstpistation.conf << DROP
 [Service]
 ExecStart=
-ExecStart=/usr/sbin/nft -f /etc/aetherium/nftables.conf
+ExecStart=/usr/sbin/nft -f /etc/mstpistation/nftables.conf
 DROP
 
 systemctl enable nftables 2>/dev/null || true

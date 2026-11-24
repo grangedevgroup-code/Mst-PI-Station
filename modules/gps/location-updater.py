@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Aetherium GPS Location Updater
-Reads GPS position and writes to /var/lib/aetherium/location.json
+Mst-PI-Station GPS Location Updater
+Reads GPS position and writes to /var/lib/mstpistation/location.json
 Also announces position via Reticulum if enabled.
 """
 
@@ -11,7 +11,7 @@ from pathlib import Path
 log = logging.getLogger("gps-location")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
-LOCATION_FILE = Path("/var/lib/aetherium/location.json")
+LOCATION_FILE = Path("/var/lib/mstpistation/location.json")
 UPDATE_INTERVAL = 10  # seconds
 
 

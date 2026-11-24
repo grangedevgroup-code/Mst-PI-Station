@@ -18,19 +18,19 @@ fi
 
 # Override service port if detected
 if [[ -n "${MESH_PORT}" ]]; then
-    mkdir -p /etc/systemd/system/aetherium-meshtastic.service.d
-    cat > /etc/systemd/system/aetherium-meshtastic.service.d/port.conf << DROP
+    mkdir -p /etc/systemd/system/mstpistation-meshtastic.service.d
+    cat > /etc/systemd/system/mstpistation-meshtastic.service.d/port.conf << DROP
 [Service]
 Environment=MESHTASTIC_PORT=${MESH_PORT}
 DROP
     systemctl daemon-reload
 fi
 
-systemctl enable aetherium-meshtastic 2>/dev/null || true
-systemctl restart aetherium-meshtastic || true
+systemctl enable mstpistation-meshtastic 2>/dev/null || true
+systemctl restart mstpistation-meshtastic || true
 
 sleep 2
-if systemctl is-active aetherium-meshtastic &>/dev/null; then
+if systemctl is-active mstpistation-meshtastic &>/dev/null; then
     log "Meshtastic bridge running"
 else
     log "Meshtastic bridge starting (waiting for device)"

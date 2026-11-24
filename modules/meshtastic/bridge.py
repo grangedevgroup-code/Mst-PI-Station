@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Aetherium Meshtastic ↔ LXMF Bridge
+Mst-PI-Station Meshtastic ↔ LXMF Bridge
 Connects a Meshtastic device to the Reticulum/LXMF mesh.
 
 Messages sent on Meshtastic channel 0 appear in LXMF and vice versa.
@@ -16,15 +16,15 @@ import threading
 import hashlib
 from pathlib import Path
 
-AETHERIUM_DIR = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(AETHERIUM_DIR))
+MSTPISTATION_DIR = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(MSTPISTATION_DIR))
 
 log = logging.getLogger("meshtastic-bridge")
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
 DEVICE_PORT = None
-DATA_DIR = Path("/var/lib/aetherium/meshtastic")
+DATA_DIR = Path("/var/lib/mstpistation/meshtastic")
 STATE_FILE = DATA_DIR / "bridge-state.json"
 
 

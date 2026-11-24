@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 log() { echo "[lte] $*"; }
 
@@ -30,7 +30,7 @@ if command -v mmcli &>/dev/null; then
     if [[ -n "${MODEMS}" ]]; then
         log "LTE modems found: ${MODEMS}"
     else
-        log "No LTE modem detected. Connect USB modem and run: aetherium module enable lte"
+        log "No LTE modem detected. Connect USB modem and run: mstpistation module enable lte"
     fi
 fi
 

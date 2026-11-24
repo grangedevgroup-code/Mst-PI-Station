@@ -1,4 +1,4 @@
-"""Configuration management for Aetherium."""
+"""Configuration management for Mst-PI-Station."""
 
 import os
 import yaml
@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-CONFIG_DIR = Path("/etc/aetherium")
-CONFIG_FILE = CONFIG_DIR / "aetherium.yaml"
+CONFIG_DIR = Path("/etc/mstpistation")
+CONFIG_FILE = CONFIG_DIR / "mstpistation.yaml"
 HARDWARE_FILE = CONFIG_DIR / "hardware.yaml"
 INSTALL_DIR = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 HARDWARE_DEFAULTS_DIR = INSTALL_DIR / "config" / "hardware"
@@ -45,7 +45,7 @@ class Config:
             },
             "hotspot": {
                 "enabled": False,
-                "ssid": f"Aetherium-{os.uname().nodename}",
+                "ssid": f"Mst-PI-Station-{os.uname().nodename}",
                 "channel": 6,
                 "band": "2.4GHz",
                 "password": "",

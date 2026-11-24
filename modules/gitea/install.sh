@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 # Docker modules are not supported on OpenWrt (no Docker available)
 if [[ "${DISTRO_FAMILY:-}" == "openwrt" ]]; then
@@ -25,7 +25,7 @@ if ! command -v docker &>/dev/null; then
     systemctl start docker || true
 fi
 
-mkdir -p /var/lib/aetherium/gitea/data /var/lib/aetherium/gitea/config
-chmod 777 /var/lib/aetherium/gitea/data /var/lib/aetherium/gitea/config
+mkdir -p /var/lib/mstpistation/gitea/data /var/lib/mstpistation/gitea/config
+chmod 777 /var/lib/mstpistation/gitea/data /var/lib/mstpistation/gitea/config
 
 log "Gitea ready to deploy via Docker Compose"

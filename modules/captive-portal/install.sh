@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 log() { echo "[captive-portal] $*"; }
 
@@ -11,18 +11,18 @@ case "${DISTRO_FAMILY}" in
     *)      log "WARNING: Install nginx manually for ${DISTRO_FAMILY}" ;;
 esac
 
-mkdir -p /etc/aetherium/captive-portal /var/www/aetherium-portal
+mkdir -p /etc/mstpistation/captive-portal /var/www/mstpistation-portal
 
 # Disable default nginx site
 rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
 
 # nginx site config for captive portal (port 80 only — portal intercept)
-cat > /etc/nginx/sites-available/aetherium-portal << 'NGINX'
+cat > /etc/nginx/sites-available/mstpistation-portal << 'NGINX'
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name _;
-    root /var/www/aetherium-portal;
+    root /var/www/mstpistation-portal;
     index index.html;
 
     # Serve portal page for all requests
@@ -37,12 +37,12 @@ server {
     location /ncsi.txt                 { return 200 "Microsoft NCSI"; }
     location /success.txt              { return 200 "Success\n"; }
 
-    access_log /var/log/nginx/aetherium-portal-access.log;
-    error_log  /var/log/nginx/aetherium-portal-error.log;
+    access_log /var/log/nginx/mstpistation-portal-access.log;
+    error_log  /var/log/nginx/mstpistation-portal-error.log;
 }
 NGINX
 
-ln -sf /etc/nginx/sites-available/aetherium-portal /etc/nginx/sites-enabled/aetherium-portal 2>/dev/null || \
-    cp /etc/nginx/sites-available/aetherium-portal /etc/nginx/conf.d/aetherium-portal.conf
+ln -sf /etc/nginx/sites-available/mstpistation-portal /etc/nginx/sites-enabled/mstpistation-portal 2>/dev/null || \
+    cp /etc/nginx/sites-available/mstpistation-portal /etc/nginx/conf.d/mstpistation-portal.conf
 
 log "Captive portal nginx config installed"

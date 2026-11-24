@@ -1,6 +1,6 @@
 """
-Aetherium Dashboard — FastAPI web UI
-Served on port 8080, accessible at http://aetherium.local:8080
+Mst-PI-Station Dashboard — FastAPI web UI
+Served on port 8080, accessible at http://mstpistation.local:8080
 """
 
 import os
@@ -20,19 +20,19 @@ import uvicorn
 import yaml
 import psutil
 
-AETHERIUM_DIR = Path(__file__).parent.parent
-sys.path.insert(0, str(AETHERIUM_DIR))
+MSTPISTATION_DIR = Path(__file__).parent.parent
+sys.path.insert(0, str(MSTPISTATION_DIR))
 
 from core.config import Config
 from core.hardware import Hardware
 from core.modules import ModuleManager
 
-app = FastAPI(title="Aetherium Dashboard", version="0.1.0", docs_url=None, redoc_url=None)
+app = FastAPI(title="Mst-PI-Station Dashboard", version="0.1.0", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
-STATUS_FILE = Path("/var/run/aetherium/status.json")
-CONFIG_FILE = Path("/etc/aetherium/aetherium.yaml")
+STATUS_FILE = Path("/var/run/mstpistation/status.json")
+CONFIG_FILE = Path("/etc/mstpistation/mstpistation.yaml")
 
 
 def get_status() -> Dict[str, Any]:
@@ -42,7 +42,7 @@ def get_status() -> Dict[str, Any]:
                 return json.load(f)
         except Exception:
             pass
-    return {"node": "aetherium", "profile": "unknown", "healthy": False,
+    return {"node": "mstpistation", "profile": "unknown", "healthy": False,
             "services": {}, "interfaces": [], "system": {}}
 
 
@@ -67,13 +67,13 @@ async def index(request: Request):
     cpu_temp = _cpu_temp()
     uptime = _uptime()
 
-    mm = ModuleManager(AETHERIUM_DIR, cfg, hw)
+    mm = ModuleManager(MSTPISTATION_DIR, cfg, hw)
     modules = mm.list_modules()
     active_modules = [m for m in modules if m["status"] == "active"]
 
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "node_name": cfg.get("node.name", "aetherium-node"),
+        "node_name": cfg.get("node.name", "mstpistation-node"),
         "profile": cfg.get("node.profile", "unconfigured"),
         "status": status,
         "cpu_percent": cpu_percent,
@@ -109,7 +109,7 @@ async def network(request: Request):
 
     return templates.TemplateResponse("network.html", {
         "request": request,
-        "node_name": get_config().get("node.name", "aetherium-node"),
+        "node_name": get_config().get("node.name", "mstpistation-node"),
         "interfaces": interfaces,
         "batman_peers": batman_peers,
         "mesh_stats": mesh_stats,
@@ -120,12 +120,12 @@ async def network(request: Request):
 async def services(request: Request):
     cfg = get_config()
     hw = get_hardware()
-    mm = ModuleManager(AETHERIUM_DIR, cfg, hw)
+    mm = ModuleManager(MSTPISTATION_DIR, cfg, hw)
     modules = mm.list_modules()
 
     return templates.TemplateResponse("services.html", {
         "request": request,
-        "node_name": cfg.get("node.name", "aetherium-node"),
+        "node_name": cfg.get("node.name", "mstpistation-node"),
         "modules": modules,
     })
 
@@ -135,7 +135,7 @@ async def service_enable(name: str, request: Request):
     if os.geteuid() == 0:
         cfg = get_config()
         hw = get_hardware()
-        mm = ModuleManager(AETHERIUM_DIR, cfg, hw)
+        mm = ModuleManager(MSTPISTATION_DIR, cfg, hw)
         success, msg = mm.enable(name)
         return JSONResponse({"success": success, "message": msg})
     return JSONResponse({"success": False, "message": "Dashboard not running as root"}, status_code=403)
@@ -146,7 +146,7 @@ async def service_disable(name: str, request: Request):
     if os.geteuid() == 0:
         cfg = get_config()
         hw = get_hardware()
-        mm = ModuleManager(AETHERIUM_DIR, cfg, hw)
+        mm = ModuleManager(MSTPISTATION_DIR, cfg, hw)
         success, msg = mm.disable(name)
         return JSONResponse({"success": success, "message": msg})
     return JSONResponse({"success": False, "message": "Dashboard not running as root"}, status_code=403)
@@ -159,7 +159,7 @@ async def config_page(request: Request):
         cfg_text = CONFIG_FILE.read_text()
     return templates.TemplateResponse("config.html", {
         "request": request,
-        "node_name": get_config().get("node.name", "aetherium-node"),
+        "node_name": get_config().get("node.name", "mstpistation-node"),
         "config_text": cfg_text,
         "config_file": str(CONFIG_FILE),
     })
@@ -202,7 +202,7 @@ async def api_metrics():
 
 @app.get("/api/peers")
 async def api_peers():
-    peers_file = Path("/var/lib/aetherium/peers.json")
+    peers_file = Path("/var/lib/mstpistation/peers.json")
     if peers_file.exists():
         return json.loads(peers_file.read_text())
     return []

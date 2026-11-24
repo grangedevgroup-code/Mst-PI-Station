@@ -1,2 +1,2 @@
-# Aetherium core package
+# Mst-PI-Station core package
 __version__ = "0.1.0"

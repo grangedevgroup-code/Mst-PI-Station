@@ -6,7 +6,7 @@ Before=reticulum.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/etc/aetherium/batman-adv-setup.sh
+ExecStart=/etc/mstpistation/batman-adv-setup.sh
 ExecStop=/bin/bash -c 'batctl if del $(batctl if | cut -d: -f1) 2>/dev/null || true; ip link set bat0 down 2>/dev/null || true'
 StandardOutput=journal
 StandardError=journal

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
-LXMF_SOURCE="${AETHERIUM_DIR}/SourceDependencies/LXMF-0.9.6"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
+LXMF_SOURCE="${MSTPISTATION_DIR}/SourceDependencies/LXMF-0.9.6"
 
 log() { echo "[lxmf] $*"; }
 
@@ -20,13 +20,13 @@ fi
     exit 1
 }
 
-mkdir -p /var/lib/aetherium/lxmf
-useradd --system --no-create-home --home-dir /var/lib/aetherium/lxmf \
+mkdir -p /var/lib/mstpistation/lxmf
+useradd --system --no-create-home --home-dir /var/lib/mstpistation/lxmf \
         --shell /usr/sbin/nologin reticulum 2>/dev/null || true
-chown reticulum:reticulum /var/lib/aetherium/lxmf
+chown reticulum:reticulum /var/lib/mstpistation/lxmf
 
 if command -v systemctl &>/dev/null; then
-    install -m644 "${MODULE_DIR}/systemd/aetherium-lxmf.service" /etc/systemd/system/
+    install -m644 "${MODULE_DIR}/systemd/mstpistation-lxmf.service" /etc/systemd/system/
     systemctl daemon-reload
 fi
 

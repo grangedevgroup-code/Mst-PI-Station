@@ -2,7 +2,7 @@ name: wireguard
 version: "system"
 description: "WireGuard VPN — encrypted tunnels for remote node management"
 type: native
-service: wg-quick@aetherium
+service: wg-quick@mstpistation
 binary: wg
 requires_hardware: []
 resource_budget:

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-NODE_NAME="${NODE_NAME:-$(hostname -s 2>/dev/null || echo aetherium)}"
+NODE_NAME="${NODE_NAME:-$(hostname -s 2>/dev/null || echo mstpistation)}"
 AP_INTERFACE="${AP_INTERFACE:-wlan0}"
 MESH_INTERFACE="${MESH_INTERFACE:-}"
 
@@ -53,28 +53,28 @@ enable-reflector=no
 rlimit-nofile=768
 CONF
 
-# Service definitions — each Aetherium service gets an mDNS record
+# Service definitions — each Mst-PI-Station service gets an mDNS record
 # Dashboard
-cat > /etc/avahi/services/aetherium-dashboard.service << XML
+cat > /etc/avahi/services/mstpistation-dashboard.service << XML
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 <service-group>
-  <name replace-wildcards="yes">Aetherium Dashboard (%h)</name>
+  <name replace-wildcards="yes">Mst-PI-Station Dashboard (%h)</name>
   <service>
     <type>_http._tcp</type>
     <port>8080</port>
     <txt-record>path=/</txt-record>
-    <txt-record>description=Aetherium mesh node dashboard</txt-record>
+    <txt-record>description=Mst-PI-Station mesh node dashboard</txt-record>
   </service>
 </service-group>
 XML
 
 # Syncthing
-cat > /etc/avahi/services/aetherium-syncthing.service << XML
+cat > /etc/avahi/services/mstpistation-syncthing.service << XML
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 <service-group>
-  <name replace-wildcards="yes">Aetherium Syncthing (%h)</name>
+  <name replace-wildcards="yes">Mst-PI-Station Syncthing (%h)</name>
   <service>
     <type>_http._tcp</type>
     <port>8384</port>
@@ -85,11 +85,11 @@ cat > /etc/avahi/services/aetherium-syncthing.service << XML
 XML
 
 # Reticulum TCP interface
-cat > /etc/avahi/services/aetherium-reticulum.service << XML
+cat > /etc/avahi/services/mstpistation-reticulum.service << XML
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 <service-group>
-  <name replace-wildcards="yes">Aetherium Reticulum (%h)</name>
+  <name replace-wildcards="yes">Mst-PI-Station Reticulum (%h)</name>
   <service>
     <type>_reticulum._tcp</type>
     <port>4242</port>
@@ -99,12 +99,12 @@ cat > /etc/avahi/services/aetherium-reticulum.service << XML
 XML
 
 # Gitea (only if running)
-if systemctl is-active aetherium-gitea &>/dev/null || docker ps 2>/dev/null | grep -q aetherium-gitea; then
-cat > /etc/avahi/services/aetherium-gitea.service << XML
+if systemctl is-active mstpistation-gitea &>/dev/null || docker ps 2>/dev/null | grep -q mstpistation-gitea; then
+cat > /etc/avahi/services/mstpistation-gitea.service << XML
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 <service-group>
-  <name replace-wildcards="yes">Aetherium Gitea (%h)</name>
+  <name replace-wildcards="yes">Mst-PI-Station Gitea (%h)</name>
   <service>
     <type>_http._tcp</type>
     <port>3000</port>
@@ -116,15 +116,15 @@ XML
 fi
 
 # Mumble VoIP
-cat > /etc/avahi/services/aetherium-mumble.service << XML
+cat > /etc/avahi/services/mstpistation-mumble.service << XML
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 <service-group>
-  <name replace-wildcards="yes">Aetherium Mumble (%h)</name>
+  <name replace-wildcards="yes">Mst-PI-Station Mumble (%h)</name>
   <service>
     <type>_mumble._tcp</type>
     <port>64738</port>
-    <txt-record>description=Aetherium mesh voice server</txt-record>
+    <txt-record>description=Mst-PI-Station mesh voice server</txt-record>
   </service>
 </service-group>
 XML

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 # Docker modules are not supported on OpenWrt (no Docker available)
 if [[ "${DISTRO_FAMILY:-}" == "openwrt" ]]; then
     echo "[monitoring] Skipping — Docker not available on OpenWrt"
     exit 0
 fi
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
 
 log() { echo "[monitoring] $*"; }
 
@@ -46,9 +46,9 @@ if ! command -v node_exporter &>/dev/null; then
 fi
 
 # node_exporter systemd service
-cat > /etc/systemd/system/aetherium-node-exporter.service << SVC
+cat > /etc/systemd/system/mstpistation-node-exporter.service << SVC
 [Unit]
-Description=Aetherium Node Exporter
+Description=Mst-PI-Station Node Exporter
 After=network.target
 
 [Service]
@@ -66,11 +66,11 @@ NoNewPrivileges=true
 WantedBy=multi-user.target
 SVC
 systemctl daemon-reload
-systemctl enable aetherium-node-exporter 2>/dev/null || true
-systemctl restart aetherium-node-exporter || true
+systemctl enable mstpistation-node-exporter 2>/dev/null || true
+systemctl restart mstpistation-node-exporter || true
 
-# Install aetherium custom exporter (batman-adv, RNS, etc.)
+# Install mstpistation custom exporter (batman-adv, RNS, etc.)
 "${VENV}/bin/pip" install --quiet prometheus_client
 
-mkdir -p /var/lib/aetherium/monitoring
+mkdir -p /var/lib/mstpistation/monitoring
 log "Monitoring stack ready"

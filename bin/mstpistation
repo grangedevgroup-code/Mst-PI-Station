@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Aetherium CLI
+Mst-PI-Station CLI
 Resilient mesh communications stack for field deployments
 """
 
 import sys
 import os
 
-# Ensure we can import from the aetherium package
-AETHERIUM_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, AETHERIUM_DIR)
+# Ensure we can import from the mstpistation package
+MSTPISTATION_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, MSTPISTATION_DIR)
 
 import click
 from rich.console import Console
@@ -30,10 +30,10 @@ from core.profiles import ProfileManager
 
 console = Console()
 
-AETHERIUM_VERSION = "0.1.0"
-CONFIG_DIR = Path("/etc/aetherium")
-INSTALL_DIR = Path(AETHERIUM_DIR)
-STATUS_FILE = Path("/var/run/aetherium/status.json")
+MSTPISTATION_VERSION = "0.1.0"
+CONFIG_DIR = Path("/etc/mstpistation")
+INSTALL_DIR = Path(MSTPISTATION_DIR)
+STATUS_FILE = Path("/var/run/mstpistation/status.json")
 
 BANNER = """[bold cyan]
     ╔══════════════════════════════════════╗
@@ -53,20 +53,20 @@ def require_root(ctx, param, value):
 
 
 @click.group()
-@click.version_option(AETHERIUM_VERSION, "--version", "-v")
+@click.version_option(MSTPISTATION_VERSION, "--version", "-v")
 @click.pass_context
 def cli(ctx):
-    """Aetherium — Resilient Mesh Communications Stack
+    """Mst-PI-Station — Resilient Mesh Communications Stack
 
     Deploy and manage communications nodes for field, emergency,
     and off-grid networking.
 
     \b
     Quick start:
-      aetherium deploy relay
-      aetherium deploy field-node
-      aetherium deploy hotspot
-      aetherium status
+      mstpistation deploy relay
+      mstpistation deploy field-node
+      mstpistation deploy hotspot
+      mstpistation status
     """
     ctx.ensure_object(dict)
     ctx.obj["config"] = Config()
@@ -107,7 +107,7 @@ def deploy(ctx, profile, dry_run, skip_modules, force):
     pm = ProfileManager(INSTALL_DIR, cfg, hw)
     mm = ModuleManager(INSTALL_DIR, cfg, hw)
 
-    console.print(BANNER.format(version=AETHERIUM_VERSION))
+    console.print(BANNER.format(version=MSTPISTATION_VERSION))
     console.print(f"[bold]Deploying profile:[/bold] [cyan]{profile}[/cyan]")
     console.print(f"[bold]Hardware:[/bold]  {hw.model} / {hw.arch}")
     console.print("")
@@ -151,8 +151,8 @@ def deploy(ctx, profile, dry_run, skip_modules, force):
         console.print("")
         local_ip = _get_local_ip()
         console.print(f"  Dashboard: [link]http://{local_ip}:8080[/link]")
-        console.print(f"  Status:    aetherium status")
-        console.print(f"  Logs:      aetherium logs")
+        console.print(f"  Status:    mstpistation status")
+        console.print(f"  Logs:      mstpistation logs")
 
 
 # ── status ────────────────────────────────────────────────────────────────────
@@ -175,7 +175,7 @@ def status(ctx, output_json, watch):
             return
 
         # Header
-        node_name = cfg.get("node.name", "aetherium-node")
+        node_name = cfg.get("node.name", "mstpistation-node")
         profile = cfg.get("node.profile", "unconfigured")
         uptime = _get_uptime()
 
@@ -186,7 +186,7 @@ def status(ctx, output_json, watch):
             f"Uptime: {uptime}  |  "
             f"[{'green' if status_data['healthy'] else 'red'}]"
             f"{'● healthy' if status_data['healthy'] else '● degraded'}[/]",
-            title="[bold]Aetherium Node Status[/bold]",
+            title="[bold]Mst-PI-Station Node Status[/bold]",
             border_style="cyan"
         ))
 
@@ -248,7 +248,7 @@ def status(ctx, output_json, watch):
 
 @cli.group()
 def module():
-    """Manage Aetherium modules (enable, disable, list, update)."""
+    """Manage Mst-PI-Station modules (enable, disable, list, update)."""
     pass
 
 
@@ -260,7 +260,7 @@ def module_list(ctx):
     hw = ctx.obj["hardware"]
     mm = ModuleManager(INSTALL_DIR, cfg, hw)
 
-    table = Table(box=box.ROUNDED, title="[bold]Aetherium Modules[/bold]",
+    table = Table(box=box.ROUNDED, title="[bold]Mst-PI-Station Modules[/bold]",
                   show_header=True, header_style="bold")
     table.add_column("Module", style="cyan", min_width=18)
     table.add_column("Type", style="dim")
@@ -356,7 +356,7 @@ def module_update(ctx, name):
 
 @cli.group()
 def config():
-    """Manage Aetherium configuration."""
+    """Manage Mst-PI-Station configuration."""
     pass
 
 
@@ -401,7 +401,7 @@ def config_get(ctx, key):
 def config_edit():
     """Open configuration in editor."""
     editor = os.environ.get("EDITOR", "nano")
-    cfg_file = CONFIG_DIR / "aetherium.yaml"
+    cfg_file = CONFIG_DIR / "mstpistation.yaml"
     os.execvp(editor, [editor, str(cfg_file)])
 
 
@@ -436,7 +436,7 @@ def hardware_detect():
     script = INSTALL_DIR / "installer" / "detect-hardware.sh"
     subprocess.run(["bash", "-c", f"source {script} && detect_hardware"], check=False)
     console.print("[green]✓[/green] Hardware detection complete")
-    with open("/etc/aetherium/hardware.yaml") as f:
+    with open("/etc/mstpistation/hardware.yaml") as f:
         console.print(f.read())
 
 
@@ -445,7 +445,7 @@ def hardware_detect():
 def hardware_show(ctx):
     """Show detected hardware information."""
     hw = ctx.obj["hardware"]
-    hw_file = Path("/etc/aetherium/hardware.yaml")
+    hw_file = Path("/etc/mstpistation/hardware.yaml")
 
     if hw_file.exists():
         with open(hw_file) as f:
@@ -469,7 +469,7 @@ def hardware_show(ctx):
         console.print(table)
     else:
         console.print("[yellow]Hardware detection has not been run.[/yellow]")
-        console.print("Run: sudo aetherium hardware detect")
+        console.print("Run: sudo mstpistation hardware detect")
 
 
 # ── logs ─────────────────────────────────────────────────────────────────────
@@ -483,18 +483,18 @@ def logs(service, lines, follow):
 
     \b
     Examples:
-      aetherium logs
-      aetherium logs reticulum
-      aetherium logs reticulum --follow
+      mstpistation logs
+      mstpistation logs reticulum
+      mstpistation logs reticulum --follow
     """
     if service:
-        unit = f"aetherium-{service}" if not service.startswith("aetherium") else service
+        unit = f"mstpistation-{service}" if not service.startswith("mstpistation") else service
         cmd = ["journalctl", "-u", unit, f"-n{lines}"]
         if follow:
             cmd.append("-f")
         subprocess.run(cmd)
     else:
-        cmd = ["journalctl", "-t", "aetherium", f"-n{lines}"]
+        cmd = ["journalctl", "-t", "mstpistation", f"-n{lines}"]
         if follow:
             cmd.append("-f")
         subprocess.run(cmd)
@@ -505,7 +505,7 @@ def logs(service, lines, follow):
 @cli.command()
 @click.option("--check", is_flag=True, help="Check for updates without installing")
 def update(check):
-    """Update Aetherium to the latest version."""
+    """Update Mst-PI-Station to the latest version."""
     if not check and os.geteuid() != 0:
         console.print("[red][✗] Requires root.[/red]")
         sys.exit(1)
@@ -529,13 +529,13 @@ def update(check):
         behind = git("rev-list", "--count", f"HEAD..{upstream}")
         count = behind.stdout.strip()
         if count.isdigit() and int(count) > 0:
-            console.print(f"[yellow]{count} update(s) available on {upstream}.[/yellow] Run: sudo aetherium update")
+            console.print(f"[yellow]{count} update(s) available on {upstream}.[/yellow] Run: sudo mstpistation update")
         else:
-            console.print("[green]✓[/green] Aetherium is up to date")
+            console.print("[green]✓[/green] Mst-PI-Station is up to date")
     else:
         pull = git("pull", "--ff-only")
         if pull.returncode == 0:
-            console.print("[green]✓[/green] Update complete. Run 'sudo aetherium deploy' to apply.")
+            console.print("[green]✓[/green] Update complete. Run 'sudo mstpistation deploy' to apply.")
         else:
             console.print(f"[red]✗ Update failed:[/red] {pull.stderr.strip() or pull.stdout.strip()}")
             sys.exit(1)
@@ -553,7 +553,7 @@ def fleet():
 @click.pass_context
 def fleet_list(ctx):
     """List discovered mesh peers."""
-    peers_file = Path("/var/lib/aetherium/peers.json")
+    peers_file = Path("/var/lib/mstpistation/peers.json")
     if not peers_file.exists():
         console.print("[dim]No peers discovered yet. Deploy relay or field-node profile first.[/dim]")
         return
@@ -612,7 +612,7 @@ def emergency_send(message, retransmit, interval):
              "--retransmit", str(retransmit),
              "--interval", str(interval),
              msg],
-            env={**os.environ, "AETHERIUM_DIR": str(INSTALL_DIR)},
+            env={**os.environ, "MSTPISTATION_DIR": str(INSTALL_DIR)},
             check=True,
         )
     except FileNotFoundError:
@@ -625,7 +625,7 @@ def emergency_send(message, retransmit, interval):
 @click.option("--lines", "-n", default=20, show_default=True)
 def emergency_log(lines):
     """Show recent emergency alerts received by this node."""
-    log_path = Path("/var/log/aetherium/emergency/alerts.log")
+    log_path = Path("/var/log/mstpistation/emergency/alerts.log")
     if not log_path.exists():
         console.print("[dim]No alerts received.[/dim]")
         return

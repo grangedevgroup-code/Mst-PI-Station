@@ -1,6 +1,6 @@
 # Unified hardware defaults — applied IDENTICALLY to every device.
 #
-# Aetherium intentionally ships ONE setup for all hardware (Pi 3/4/5, Zero 2,
+# Mst-PI-Station intentionally ships ONE setup for all hardware (Pi 3/4/5, Zero 2,
 # other ARM SBCs, x86_64, OpenWrt). There are no per-model config files.
 #
 # Anything that genuinely differs between boards is decided at RUNTIME, not here:

@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MODULE_DIR="${MODULE_DIR:-/opt/aetherium/modules/monitoring}"
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
+MODULE_DIR="${MODULE_DIR:-/opt/mstpistation/modules/monitoring}"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
 
 log() { echo "[monitoring/configure] $*"; }
 
-mkdir -p /var/lib/aetherium/prometheus /var/lib/aetherium/grafana
-chmod 777 /var/lib/aetherium/grafana  # Grafana writes as its own uid
+mkdir -p /var/lib/mstpistation/prometheus /var/lib/mstpistation/grafana
+chmod 777 /var/lib/mstpistation/grafana  # Grafana writes as its own uid
 
 # Generate (or load existing) Grafana admin password
-GRAFANA_PASS_FILE="/etc/aetherium/monitoring/grafana-admin-password"
-mkdir -p /etc/aetherium/monitoring
-chmod 700 /etc/aetherium/monitoring
+GRAFANA_PASS_FILE="/etc/mstpistation/monitoring/grafana-admin-password"
+mkdir -p /etc/mstpistation/monitoring
+chmod 700 /etc/mstpistation/monitoring
 
 if [[ ! -f "${GRAFANA_PASS_FILE}" ]]; then
     # Generate a random 16-char alphanumeric password
@@ -35,28 +35,28 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
 OVERRIDE
 
-# Deploy Aetherium exporter systemd service
-cat > /etc/systemd/system/aetherium-exporter.service << SVC
+# Deploy Mst-PI-Station exporter systemd service
+cat > /etc/systemd/system/mstpistation-exporter.service << SVC
 [Unit]
-Description=Aetherium Custom Metrics Exporter
+Description=Mst-PI-Station Custom Metrics Exporter
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=${AETHERIUM_DIR}/venv/bin/python3 ${AETHERIUM_DIR}/core/exporter.py
+ExecStart=${MSTPISTATION_DIR}/venv/bin/python3 ${MSTPISTATION_DIR}/core/exporter.py
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=aetherium-exporter
+SyslogIdentifier=mstpistation-exporter
 
 [Install]
 WantedBy=multi-user.target
 SVC
 
 systemctl daemon-reload
-systemctl enable aetherium-exporter 2>/dev/null || true
-systemctl restart aetherium-exporter || true
+systemctl enable mstpistation-exporter 2>/dev/null || true
+systemctl restart mstpistation-exporter || true
 
 # Pull and start Prometheus + Grafana containers
 docker compose -f "${MODULE_DIR}/docker-compose.yml" \
@@ -67,9 +67,9 @@ docker compose -f "${MODULE_DIR}/docker-compose.yml" \
                up -d
 
 sleep 5
-if docker ps | grep -q aetherium-prometheus; then
-    log "Prometheus: http://aetherium.local:9090"
-    log "Grafana:    http://aetherium.local:3001 (admin / $(cat "${GRAFANA_PASS_FILE}"))"
+if docker ps | grep -q mstpistation-prometheus; then
+    log "Prometheus: http://mstpistation.local:9090"
+    log "Grafana:    http://mstpistation.local:3001 (admin / $(cat "${GRAFANA_PASS_FILE}"))"
     log "Grafana password also stored in: ${GRAFANA_PASS_FILE}"
 else
     log "WARNING: Monitoring containers not running — check: docker compose -f ${MODULE_DIR}/docker-compose.yml logs"

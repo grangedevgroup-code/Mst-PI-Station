@@ -10,4 +10,4 @@ resource_budget:
   memory: "5M"
   disk: "2M"
 profiles_default_on: [relay, hotspot, mesh-hub, field-node, lte-gateway, local-services]
-notes: "Announces all Aetherium services as .local mDNS records. Zero-conf discovery on mesh."
+notes: "Announces all Mst-PI-Station services as .local mDNS records. Zero-conf discovery on mesh."

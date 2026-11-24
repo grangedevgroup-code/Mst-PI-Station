@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 log() { echo "[nftables] $*"; }
 
@@ -12,12 +12,12 @@ case "${DISTRO_FAMILY}" in
 esac
 
 # Enable IP forwarding
-cat > /etc/sysctl.d/99-aetherium.conf << SYSCTL
+cat > /etc/sysctl.d/99-mstpistation.conf << SYSCTL
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
 net.ipv4.conf.all.rp_filter=0
 net.ipv4.conf.default.rp_filter=0
 SYSCTL
-sysctl -p /etc/sysctl.d/99-aetherium.conf >/dev/null
+sysctl -p /etc/sysctl.d/99-mstpistation.conf >/dev/null
 
 log "nftables installation complete"

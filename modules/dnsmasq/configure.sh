@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
-TEMPLATES_DIR="${TEMPLATES_DIR:-${AETHERIUM_DIR}/templates}"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
+TEMPLATES_DIR="${TEMPLATES_DIR:-${MSTPISTATION_DIR}/templates}"
 AP_IFACE="${AP_INTERFACE:-wlan0}"
 HOTSPOT_IP="${HOTSPOT_IP:-192.168.42.1}"
 HOTSPOT_SUBNET="${HOTSPOT_SUBNET:-192.168.42.0/24}"
-NODE_NAME="${NODE_NAME:-aetherium-node}"
+NODE_NAME="${NODE_NAME:-mstpistation-node}"
 
 log() { echo "[dnsmasq/configure] $*"; }
 
@@ -46,7 +46,7 @@ CAPTIVE_PORTAL="${CAPTIVE_PORTAL:-true}"
 
 "${VENV}/bin/python3" << PYEOF
 import sys
-sys.path.insert(0, "${AETHERIUM_DIR}")
+sys.path.insert(0, "${MSTPISTATION_DIR}")
 from jinja2 import Environment, FileSystemLoader
 
 env = Environment(loader=FileSystemLoader("${TEMPLATES_DIR}"))
@@ -62,44 +62,44 @@ ctx = {
     "node_name":        "${NODE_NAME}",
     "captive_portal":   "${CAPTIVE_PORTAL}" == "true",
     "uplink_available": "${UPLINK_AVAILABLE}" == "true",
-    "local_domain":     "aetherium.local",
+    "local_domain":     "mstpistation.local",
 }
 output = tmpl.render(**ctx)
-with open("/etc/aetherium/dnsmasq/dnsmasq.conf", "w") as f:
+with open("/etc/mstpistation/dnsmasq/dnsmasq.conf", "w") as f:
     f.write(output)
-print("Wrote /etc/aetherium/dnsmasq/dnsmasq.conf")
+print("Wrote /etc/mstpistation/dnsmasq/dnsmasq.conf")
 PYEOF
 
 # Run dnsmasq with our config
-cat > /etc/systemd/system/aetherium-dnsmasq.service << SERVICE
+cat > /etc/systemd/system/mstpistation-dnsmasq.service << SERVICE
 [Unit]
-Description=Aetherium dnsmasq — DHCP and DNS
-After=aetherium-hostapd.service
-Requires=aetherium-hostapd.service
+Description=Mst-PI-Station dnsmasq — DHCP and DNS
+After=mstpistation-hostapd.service
+Requires=mstpistation-hostapd.service
 
 [Service]
 Type=simple
-ExecStartPre=/usr/sbin/dnsmasq --test --conf-file=/etc/aetherium/dnsmasq/dnsmasq.conf
-ExecStart=/usr/sbin/dnsmasq --keep-in-foreground --conf-file=/etc/aetherium/dnsmasq/dnsmasq.conf
+ExecStartPre=/usr/sbin/dnsmasq --test --conf-file=/etc/mstpistation/dnsmasq/dnsmasq.conf
+ExecStart=/usr/sbin/dnsmasq --keep-in-foreground --conf-file=/etc/mstpistation/dnsmasq/dnsmasq.conf
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=aetherium-dnsmasq
+SyslogIdentifier=mstpistation-dnsmasq
 
 [Install]
 WantedBy=multi-user.target
 SERVICE
 
 systemctl daemon-reload
-systemctl enable aetherium-dnsmasq 2>/dev/null || true
-systemctl restart aetherium-dnsmasq || true
+systemctl enable mstpistation-dnsmasq 2>/dev/null || true
+systemctl restart mstpistation-dnsmasq || true
 
-if systemctl is-active aetherium-dnsmasq &>/dev/null; then
+if systemctl is-active mstpistation-dnsmasq &>/dev/null; then
     log "dnsmasq running (AP: ${AP_IFACE}, DHCP: ${DHCP_START}-${DHCP_END})"
 else
-    log "WARNING: dnsmasq failed. Check: journalctl -u aetherium-dnsmasq"
+    log "WARNING: dnsmasq failed. Check: journalctl -u mstpistation-dnsmasq"
 fi
 
 log "dnsmasq configuration complete"

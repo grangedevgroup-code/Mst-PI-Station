@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 # Docker modules are not supported on OpenWrt (no Docker available)
 if [[ "${DISTRO_FAMILY:-}" == "openwrt" ]]; then
@@ -27,7 +27,7 @@ if ! command -v docker &>/dev/null; then
 fi
 
 # Create data directory
-mkdir -p /var/lib/aetherium/syncthing /var/lib/aetherium/shared
-chmod 755 /var/lib/aetherium/shared
+mkdir -p /var/lib/mstpistation/syncthing /var/lib/mstpistation/shared
+chmod 755 /var/lib/mstpistation/shared
 
 log "Syncthing ready to deploy via Docker Compose"

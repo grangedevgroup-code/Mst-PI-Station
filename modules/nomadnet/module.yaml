@@ -2,7 +2,7 @@ name: nomadnet
 version: "1.0.1"
 description: "NomadNet — resilient mesh-based darknet and node pages over Reticulum"
 type: native
-service: aetherium-nomadnet
+service: mstpistation-nomadnet
 binary: nomadnet
 requires_hardware: []
 depends: [reticulum]

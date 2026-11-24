@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
 
 log() { echo "[dashboard] $*"; }
 
@@ -12,33 +12,33 @@ log() { echo "[dashboard] $*"; }
     "${VENV}/bin/pip" install --quiet fastapi uvicorn[standard] aiofiles python-multipart
 
 # Install systemd service
-cat > /etc/systemd/system/aetherium-dashboard.service << SERVICE
+cat > /etc/systemd/system/mstpistation-dashboard.service << SERVICE
 [Unit]
-Description=Aetherium Web Dashboard
-After=network.target aetherium-agent.service
+Description=Mst-PI-Station Web Dashboard
+After=network.target mstpistation-agent.service
 
 [Service]
 Type=simple
-WorkingDirectory=${AETHERIUM_DIR}/dashboard
+WorkingDirectory=${MSTPISTATION_DIR}/dashboard
 ExecStart=${VENV}/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8080 --log-level warning
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=aetherium-dashboard
+SyslogIdentifier=mstpistation-dashboard
 
 [Install]
 WantedBy=multi-user.target
 SERVICE
 
 systemctl daemon-reload
-systemctl enable aetherium-dashboard 2>/dev/null || true
-systemctl restart aetherium-dashboard || true
+systemctl enable mstpistation-dashboard 2>/dev/null || true
+systemctl restart mstpistation-dashboard || true
 
-if systemctl is-active aetherium-dashboard &>/dev/null; then
+if systemctl is-active mstpistation-dashboard &>/dev/null; then
     log "Dashboard running at http://$(hostname -I | awk '{print $1}'):8080"
 else
-    log "WARNING: Dashboard failed to start. Check: journalctl -u aetherium-dashboard"
+    log "WARNING: Dashboard failed to start. Check: journalctl -u mstpistation-dashboard"
 fi
 
 log "Dashboard installation complete"

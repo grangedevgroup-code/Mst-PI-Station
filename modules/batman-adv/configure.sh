@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
-TEMPLATES_DIR="${TEMPLATES_DIR:-${AETHERIUM_DIR}/templates}"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
+TEMPLATES_DIR="${TEMPLATES_DIR:-${MSTPISTATION_DIR}/templates}"
 MESH_IFACE="${MESH_INTERFACE:-wlan0}"
 GW_MODE="${BATMAN_GW_MODE:-off}"
-NODE_NAME="${NODE_NAME:-aetherium-node}"
+NODE_NAME="${NODE_NAME:-mstpistation-node}"
 
 log() { echo "[batman-adv/configure] $*"; }
 
 # Render setup script
 "${VENV}/bin/python3" << PYEOF
 import sys
-sys.path.insert(0, "${AETHERIUM_DIR}")
+sys.path.insert(0, "${MSTPISTATION_DIR}")
 from jinja2 import Environment, FileSystemLoader
 
 env = Environment(loader=FileSystemLoader("${TEMPLATES_DIR}"))
@@ -44,15 +44,15 @@ ctx = {
     "batman_ip":       batman_ip,
 }
 output = tmpl.render(**ctx)
-with open("/etc/aetherium/batman-adv-setup.sh", "w") as f:
+with open("/etc/mstpistation/batman-adv-setup.sh", "w") as f:
     f.write(output)
 print(f"Rendered batman-adv setup script, batman_ip={batman_ip}")
 PYEOF
 
-chmod +x /etc/aetherium/batman-adv-setup.sh
+chmod +x /etc/mstpistation/batman-adv-setup.sh
 
 # NetworkManager: mark mesh interface as unmanaged
-NM_CONF="/etc/NetworkManager/conf.d/aetherium-unmanaged.conf"
+NM_CONF="/etc/NetworkManager/conf.d/mstpistation-unmanaged.conf"
 if [[ -d /etc/NetworkManager/conf.d ]]; then
     cat > "${NM_CONF}" << NMCONF
 [keyfile]

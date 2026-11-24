@@ -1,4 +1,4 @@
-# Aetherium core virtualenv dependencies.
+# Mst-PI-Station core virtualenv dependencies.
 #
 # Pinned to compatible-release ranges so EVERY device (aarch64 / armv7l / x86_64)
 # installs the same Python stack — part of "one setup on any device". Reticulum,

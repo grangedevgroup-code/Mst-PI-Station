@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
 RNODE_PORT="${RNODE_PORT:-}"
 REGULATORY_DOMAIN="${REGULATORY_DOMAIN:-}"
 
@@ -41,14 +41,14 @@ fi
 
 if [[ -z "${RNODE_PORT}" ]]; then
     log "No RNode detected. Skipping RNode configuration."
-    log "When you connect an RNode, run: aetherium module enable rnode"
+    log "When you connect an RNode, run: mstpistation module enable rnode"
     exit 0
 fi
 
 log "Configuring RNode on ${RNODE_PORT}"
 
 # Check if RNode needs firmware flashing (rnodeconf --autoinstall)
-RNODE_VENV="${AETHERIUM_DIR}/venv/bin/rnodeconf"
+RNODE_VENV="${MSTPISTATION_DIR}/venv/bin/rnodeconf"
 if [[ -x "${RNODE_VENV}" ]]; then
     # Check RNode status
     if "${RNODE_VENV}" "${RNODE_PORT}" --info 2>/dev/null | grep -q "Reticulum"; then
@@ -63,7 +63,7 @@ fi
 # Update the site config with detected port
 python3 << PYEOF
 import yaml, sys
-config_file = "/etc/aetherium/aetherium.yaml"
+config_file = "/etc/mstpistation/mstpistation.yaml"
 try:
     with open(config_file) as f:
         cfg = yaml.safe_load(f) or {}

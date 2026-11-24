@@ -6,8 +6,8 @@ import time
 import subprocess
 import logging
 
-AETHERIUM_DIR = os.environ.get("AETHERIUM_DIR", "/opt/aetherium")
-sys.path.insert(0, os.path.join(AETHERIUM_DIR, "venv/lib"))
+MSTPISTATION_DIR = os.environ.get("MSTPISTATION_DIR", "/opt/mstpistation")
+sys.path.insert(0, os.path.join(MSTPISTATION_DIR, "venv/lib"))
 
 logging.basicConfig(level=logging.INFO, format="[emergency/listener] %(message)s")
 LOG = logging.getLogger("emergency-listener")
@@ -19,8 +19,8 @@ except ImportError:
     LOG.error("Reticulum/LXMF not available")
     sys.exit(1)
 
-IDENTITY_PATH = "/var/lib/aetherium/emergency-listener-identity"
-ALERT_LOG = "/var/log/aetherium/emergency/alerts.log"
+IDENTITY_PATH = "/var/lib/mstpistation/emergency-listener-identity"
+ALERT_LOG = "/var/log/mstpistation/emergency/alerts.log"
 
 os.makedirs(os.path.dirname(ALERT_LOG), exist_ok=True)
 
@@ -65,7 +65,7 @@ def main():
         identity = RNS.Identity()
         identity.to_file(IDENTITY_PATH)
 
-    router = LXMF.LXMRouter(storagepath="/var/lib/aetherium/lxmf-emergency-listener")
+    router = LXMF.LXMRouter(storagepath="/var/lib/mstpistation/lxmf-emergency-listener")
     router.register_delivery_identity(identity, display_name="Emergency Listener")
     router.register_delivery_callback(delivery_callback)
 

@@ -1,41 +1,37 @@
 > **Proprietary and confidential.** Copyright (c) 2026 Grange Dev Group. All rights reserved. This is not open source: you may not use, copy, build, modify, share, recreate or re-implement this code, or use it to train or prompt AI systems, even if you can see it. See [LICENSE](LICENSE).
 
-# Aetherium
+# Mst-PI-Station
 
 **Resilient Mesh Communications Stack for Field Deployments**
 
-Aetherium installs on top of any Debian/Ubuntu/Arch/Fedora Linux system and transforms it into a portable resilient communications node. Works on Raspberry Pi 4/5, ARM single-board computers, and x86_64 hardware.
+Mst-PI-Station installs on a Debian, Ubuntu, Arch or Fedora Linux system and turns it into a portable communications node that keeps working without the internet. Works on Raspberry Pi 4/5, ARM single-board computers, and x86_64 hardware.
 
 ---
 
 ## Quick Start
 
 ```bash
-# One-command install
-curl -fsSL https://get.aetherium.io/install | sudo bash
-
-# Or from this repo
 sudo bash install.sh --profile relay
 ```
 
 ### Profiles
 
 ```bash
-aetherium deploy relay          # persistent mesh relay + LoRa
-aetherium deploy field-node     # portable field comms node
-aetherium deploy hotspot        # Wi-Fi hotspot with local services
-aetherium deploy mesh-hub       # full community hub
-aetherium deploy emergency      # minimal emergency node
-aetherium deploy lte-gateway    # LTE uplink gateway
-aetherium deploy solar-relay    # low-power solar relay
-aetherium deploy local-services # offline content server
+mstpistation deploy relay          # persistent mesh relay + LoRa
+mstpistation deploy field-node     # portable field comms node
+mstpistation deploy hotspot        # Wi-Fi hotspot with local services
+mstpistation deploy mesh-hub       # full community hub
+mstpistation deploy emergency      # minimal emergency node
+mstpistation deploy lte-gateway    # LTE uplink gateway
+mstpistation deploy solar-relay    # low-power solar relay
+mstpistation deploy local-services # offline content server
 ```
 
 ---
 
 ## What it does
 
-Aetherium orchestrates and configures:
+Mst-PI-Station sets up and configures:
 
 | Layer | Technology |
 |---|---|
@@ -58,39 +54,39 @@ Aetherium orchestrates and configures:
 
 ```bash
 # Deploy a profile
-sudo aetherium deploy relay
+sudo mstpistation deploy relay
 
 # Node status
-aetherium status
-aetherium status --json
-aetherium status --watch        # live view
+mstpistation status
+mstpistation status --json
+mstpistation status --watch        # live view
 
 # Module management
-aetherium module list
-sudo aetherium module enable syncthing
-sudo aetherium module disable kiwix
+mstpistation module list
+sudo mstpistation module enable syncthing
+sudo mstpistation module disable kiwix
 
 # Configuration
-aetherium config show
-sudo aetherium config set node.name my-relay
-aetherium config get hotspot.ssid
-sudo aetherium config edit      # open in $EDITOR
+mstpistation config show
+sudo mstpistation config set node.name my-relay
+mstpistation config get hotspot.ssid
+sudo mstpistation config edit      # open in $EDITOR
 
 # Hardware
-aetherium hardware show
-sudo aetherium hardware detect  # re-detect
+mstpistation hardware show
+sudo mstpistation hardware detect  # re-detect
 
 # Fleet
-aetherium fleet list            # list mesh peers
+mstpistation fleet list            # list mesh peers
 
 # Logs
-aetherium logs                  # all services
-aetherium logs reticulum        # specific service
-aetherium logs reticulum -f     # follow
+mstpistation logs                  # all services
+mstpistation logs reticulum        # specific service
+mstpistation logs reticulum -f     # follow
 
 # Updates
-aetherium update --check
-sudo aetherium update
+mstpistation update --check
+sudo mstpistation update
 ```
 
 ---
@@ -98,16 +94,16 @@ sudo aetherium update
 ## Directory Layout
 
 ```
-/opt/aetherium/        Installation
-/etc/aetherium/        Configuration (edit these)
-  aetherium.yaml       Main config
+/opt/mstpistation/        Installation
+/etc/mstpistation/        Configuration (edit these)
+  mstpistation.yaml       Main config
   hardware.yaml        Auto-detected hardware
   reticulum/           Reticulum config
   hostapd/             hostapd config
   dnsmasq/             dnsmasq config
-/var/lib/aetherium/    Persistent data
-/var/log/aetherium/    Logs
-/var/run/aetherium/    Runtime state (status.json, peers.json)
+/var/lib/mstpistation/    Persistent data
+/var/log/mstpistation/    Logs
+/var/run/mstpistation/    Runtime state (status.json, peers.json)
 ```
 
 ---
@@ -120,8 +116,8 @@ sudo aetherium update
 | RAM | 512MB | 2GB+ |
 | Storage | 8GB | 32GB |
 | Wi-Fi | 1 adapter | 2 adapters (one for AP, one for mesh) |
-| LoRa | — | RNode-compatible USB device |
-| LTE | — | Quectel EC25 or Huawei E3372 |
+| LoRa |, | RNode-compatible USB device |
+| LTE |, | Quectel EC25 or Huawei E3372 |
 
 Supported architectures: **aarch64, armv7l, x86_64**
 
@@ -129,19 +125,19 @@ Supported architectures: **aarch64, armv7l, x86_64**
 
 ## Source Dependencies
 
-Aetherium integrates these open-source projects:
+Mst-PI-Station integrates these open-source projects:
 
-- [Reticulum](https://reticulum.network) — encrypted mesh transport
-- [LXMF](https://github.com/markqvist/LXMF) — messaging over Reticulum
-- [NomadNet](https://github.com/markqvist/NomadNet) — mesh node pages
-- [Sideband](https://github.com/markqvist/Sideband) — mobile Reticulum client
-- [batman-adv](https://www.open-mesh.org/projects/batman-adv) — L2 mesh
-- [RNode Firmware](https://github.com/markqvist/RNode_Firmware) — LoRa firmware
-- [Meshtastic](https://meshtastic.org) — LoRa mesh (standalone)
-- [OpenWrt](https://openwrt.org) — router integration
+- [Reticulum](https://reticulum.network), encrypted mesh transport
+- [LXMF](https://github.com/markqvist/LXMF), messaging over Reticulum
+- [NomadNet](https://github.com/markqvist/NomadNet), mesh node pages
+- [Sideband](https://github.com/markqvist/Sideband), mobile Reticulum client
+- [batman-adv](https://www.open-mesh.org/projects/batman-adv), L2 mesh
+- [RNode Firmware](https://github.com/markqvist/RNode_Firmware), LoRa firmware
+- [Meshtastic](https://meshtastic.org), LoRa mesh (standalone)
+- [OpenWrt](https://openwrt.org), router integration
 
 ---
 
 ## License
 
-MIT — See LICENSE file.
+MIT, See LICENSE file.

@@ -1,4 +1,4 @@
-"""Hardware abstraction layer for Aetherium."""
+"""Hardware abstraction layer for Mst-PI-Station."""
 
 import os
 import subprocess
@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 
 
-HARDWARE_FILE = Path("/etc/aetherium/hardware.yaml")
+HARDWARE_FILE = Path("/etc/mstpistation/hardware.yaml")
 
 
 class Hardware:
@@ -405,7 +405,7 @@ class Hardware:
                 )
         if profile in ("relay", "field-node") and not self.has_rnode:
             warnings.append("No RNode detected — LoRa transport unavailable. "
-                            "Connect an RNode and run: aetherium module enable rnode")
+                            "Connect an RNode and run: mstpistation module enable rnode")
         if profile == "lte-gateway" and not self.has_lte:
             warnings.append("No LTE modem detected — install a supported USB LTE modem.")
         if self.ram_mb > 0 and self.ram_mb < 512 and profile in ("mesh-hub", "monitoring"):

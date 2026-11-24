@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 # Docker modules are not supported on OpenWrt (no Docker available)
 if [[ "${DISTRO_FAMILY:-}" == "openwrt" ]]; then
@@ -25,6 +25,6 @@ if ! command -v docker &>/dev/null; then
     systemctl start docker || true
 fi
 
-mkdir -p /var/lib/aetherium/matrix
-chmod 755 /var/lib/aetherium/matrix
+mkdir -p /var/lib/mstpistation/matrix
+chmod 755 /var/lib/mstpistation/matrix
 log "Matrix Conduit ready to deploy"

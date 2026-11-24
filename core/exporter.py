@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Aetherium Custom Prometheus Exporter
+Mst-PI-Station Custom Prometheus Exporter
 Exposes batman-adv, Reticulum, GPS, SDR, and node-specific metrics.
 Runs on port 9200.
 """
@@ -13,8 +13,8 @@ import json
 import subprocess
 from pathlib import Path
 
-AETHERIUM_DIR = Path(__file__).parent.parent
-sys.path.insert(0, str(AETHERIUM_DIR))
+MSTPISTATION_DIR = Path(__file__).parent.parent
+sys.path.insert(0, str(MSTPISTATION_DIR))
 
 try:
     from prometheus_client import start_http_server, Gauge, Counter, Info, Enum
@@ -31,40 +31,40 @@ INTERVAL = 15  # seconds
 # ── Metric definitions ────────────────────────────────────────────────────────
 
 # Node identity
-node_info = Info("aetherium_node", "Aetherium node information")
+node_info = Info("mstpistation_node", "Mst-PI-Station node information")
 
 # Batman-adv mesh
-batman_peers = Gauge("aetherium_batman_peers_total", "Number of batman-adv mesh neighbors")
-batman_gateways = Gauge("aetherium_batman_gateways_total", "Number of batman-adv gateways visible")
+batman_peers = Gauge("mstpistation_batman_peers_total", "Number of batman-adv mesh neighbors")
+batman_gateways = Gauge("mstpistation_batman_gateways_total", "Number of batman-adv gateways visible")
 
 # Reticulum
-rns_interfaces_up = Gauge("aetherium_rns_interfaces_up", "Reticulum interfaces that are active")
-rns_announced_dests = Gauge("aetherium_rns_announced_destinations", "Reticulum announced destinations known")
+rns_interfaces_up = Gauge("mstpistation_rns_interfaces_up", "Reticulum interfaces that are active")
+rns_announced_dests = Gauge("mstpistation_rns_announced_destinations", "Reticulum announced destinations known")
 
 # Services
-service_up = Gauge("aetherium_service_up", "Service health (1=active, 0=down)", ["service"])
+service_up = Gauge("mstpistation_service_up", "Service health (1=active, 0=down)", ["service"])
 
 # Wi-Fi
-wifi_signal = Gauge("aetherium_wifi_signal_dbm", "Wi-Fi signal strength in dBm", ["interface"])
-wifi_clients = Gauge("aetherium_wifi_clients_total", "Number of associated Wi-Fi clients", ["interface"])
+wifi_signal = Gauge("mstpistation_wifi_signal_dbm", "Wi-Fi signal strength in dBm", ["interface"])
+wifi_clients = Gauge("mstpistation_wifi_clients_total", "Number of associated Wi-Fi clients", ["interface"])
 
 # LTE
-lte_signal = Gauge("aetherium_lte_signal_dbm", "LTE signal strength (RSSI)", ["modem"])
-lte_connected = Gauge("aetherium_lte_connected", "LTE data connection status (1=up)")
+lte_signal = Gauge("mstpistation_lte_signal_dbm", "LTE signal strength (RSSI)", ["modem"])
+lte_connected = Gauge("mstpistation_lte_connected", "LTE data connection status (1=up)")
 
 # GPS
-gps_fix = Gauge("aetherium_gps_fix", "GPS fix quality (0=none, 1=2D, 2=3D)")
-gps_satellites = Gauge("aetherium_gps_satellites", "GPS satellites in use")
-gps_latitude = Gauge("aetherium_gps_latitude_deg", "GPS latitude in degrees")
-gps_longitude = Gauge("aetherium_gps_longitude_deg", "GPS longitude in degrees")
-gps_altitude = Gauge("aetherium_gps_altitude_m", "GPS altitude in meters")
+gps_fix = Gauge("mstpistation_gps_fix", "GPS fix quality (0=none, 1=2D, 2=3D)")
+gps_satellites = Gauge("mstpistation_gps_satellites", "GPS satellites in use")
+gps_latitude = Gauge("mstpistation_gps_latitude_deg", "GPS latitude in degrees")
+gps_longitude = Gauge("mstpistation_gps_longitude_deg", "GPS longitude in degrees")
+gps_altitude = Gauge("mstpistation_gps_altitude_m", "GPS altitude in meters")
 
 # Temperature sensors
-cpu_temp = Gauge("aetherium_cpu_temp_celsius", "CPU temperature in Celsius")
+cpu_temp = Gauge("mstpistation_cpu_temp_celsius", "CPU temperature in Celsius")
 
 # Power
-battery_voltage = Gauge("aetherium_battery_voltage_v", "Battery voltage in volts")
-battery_percent = Gauge("aetherium_battery_percent", "Battery charge percentage")
+battery_voltage = Gauge("mstpistation_battery_voltage_v", "Battery voltage in volts")
+battery_percent = Gauge("mstpistation_battery_percent", "Battery charge percentage")
 
 
 # ── Collection functions ──────────────────────────────────────────────────────
@@ -105,9 +105,9 @@ def collect_batman():
 
 def collect_services():
     watched = [
-        "reticulum", "aetherium-hostapd", "batman-adv",
-        "dnsmasq", "aetherium-agent", "aetherium-lxmf",
-        "aetherium-nomadnet", "aetherium-dashboard",
+        "reticulum", "mstpistation-hostapd", "batman-adv",
+        "dnsmasq", "mstpistation-agent", "mstpistation-lxmf",
+        "mstpistation-nomadnet", "mstpistation-dashboard",
     ]
     for svc in watched:
         try:
@@ -254,7 +254,7 @@ def collect_all():
 
 def main():
     start_http_server(PORT)
-    print(f"Aetherium exporter running on :{PORT}")
+    print(f"Mst-PI-Station exporter running on :{PORT}")
 
     while True:
         try:

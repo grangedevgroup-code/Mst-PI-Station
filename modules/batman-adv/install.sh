@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
 
 log() { echo "[batman-adv] $*"; }
 
@@ -29,7 +29,7 @@ esac
 # Try to compile from source if module not available
 if ! modinfo batman-adv &>/dev/null 2>&1; then
     log "batman-adv kernel module not found, attempting DKMS build..."
-    local_src="${AETHERIUM_DIR}/SourceDependencies/batman-adv-main"
+    local_src="${MSTPISTATION_DIR}/SourceDependencies/batman-adv-main"
     if [[ -d "${local_src}" ]] && command -v make &>/dev/null; then
         # Install build deps
         case "${DISTRO_FAMILY}" in

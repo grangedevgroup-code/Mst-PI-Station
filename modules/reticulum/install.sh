@@ -2,11 +2,11 @@
 # Reticulum installation module
 set -euo pipefail
 
-source /etc/aetherium/distro.env 2>/dev/null || true
+source /etc/mstpistation/distro.env 2>/dev/null || true
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-RNS_SOURCE="${AETHERIUM_DIR}/SourceDependencies/Reticulum-1.2.5"
-VENV="${AETHERIUM_DIR}/venv"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+RNS_SOURCE="${MSTPISTATION_DIR}/SourceDependencies/Reticulum-1.2.5"
+VENV="${MSTPISTATION_DIR}/venv"
 RNS_USER="reticulum"
 RNS_HOME="/var/lib/reticulum"
 

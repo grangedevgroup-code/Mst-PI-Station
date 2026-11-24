@@ -1,8 +1,8 @@
 name: captive-portal
 version: "system"
-description: "Captive portal — redirects new hotspot clients to Aetherium landing page"
+description: "Captive portal — redirects new hotspot clients to Mst-PI-Station landing page"
 type: native
-service: aetherium-captive-portal
+service: mstpistation-captive-portal
 binary: nginx
 requires_hardware: []
 resource_budget:

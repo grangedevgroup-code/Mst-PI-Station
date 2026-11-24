@@ -2,7 +2,7 @@ name: emergency
 version: "system"
 description: "Emergency alerts — LXMF broadcast to all mesh nodes, CLI trigger, escalating retransmit"
 type: native
-service: aetherium-emergency
+service: mstpistation-emergency
 binary: python3
 requires_hardware: []
 depends: [reticulum, lxmf]
@@ -11,4 +11,4 @@ resource_budget:
   memory: "15M"
   disk: "5M"
 profiles_default_on: [relay, mesh-hub, field-node, emergency]
-notes: "CLI: aetherium emergency send 'SOS message'. Broadcasts via LXMF to all known peers."
+notes: "CLI: mstpistation emergency send 'SOS message'. Broadcasts via LXMF to all known peers."

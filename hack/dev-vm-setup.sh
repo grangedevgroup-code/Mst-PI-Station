@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Aetherium dev VM setup — spins up a QEMU ARM64 VM for testing
+# Mst-PI-Station dev VM setup — spins up a QEMU ARM64 VM for testing
 # Requires: qemu-system-aarch64, qemu-utils, wget
 set -euo pipefail
 
 IMG_URL="https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-latest"
-IMG_FILE="/tmp/aetherium-dev-vm.img"
-VM_DISK="/tmp/aetherium-dev.qcow2"
+IMG_FILE="/tmp/mstpistation-dev-vm.img"
+VM_DISK="/tmp/mstpistation-dev.qcow2"
 VM_PORT=2222
 
 log()  { echo "[dev-vm] $*"; }
@@ -27,7 +27,7 @@ fi
 
 log "Starting QEMU ARM64 VM..."
 log "SSH: ssh -p ${VM_PORT} pi@localhost (password: raspberry)"
-log "To install Aetherium inside VM: sudo bash /vagrant/install.sh"
+log "To install Mst-PI-Station inside VM: sudo bash /vagrant/install.sh"
 
 qemu-system-aarch64 \
     -machine raspi3b \

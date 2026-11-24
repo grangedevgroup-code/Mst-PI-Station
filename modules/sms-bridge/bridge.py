@@ -8,14 +8,14 @@ import logging
 import subprocess
 import threading
 
-AETHERIUM_DIR = os.environ.get("AETHERIUM_DIR", "/opt/aetherium")
-sys.path.insert(0, os.path.join(AETHERIUM_DIR, "venv/lib"))
+MSTPISTATION_DIR = os.environ.get("MSTPISTATION_DIR", "/opt/mstpistation")
+sys.path.insert(0, os.path.join(MSTPISTATION_DIR, "venv/lib"))
 
 logging.basicConfig(level=logging.INFO, format="[sms-bridge] %(message)s")
 LOG = logging.getLogger("sms-bridge")
 
-SMS_LOG = "/var/log/aetherium/sms-bridge/messages.jsonl"
-IDENTITY_PATH = "/var/lib/aetherium/sms-bridge-identity"
+SMS_LOG = "/var/log/mstpistation/sms-bridge/messages.jsonl"
+IDENTITY_PATH = "/var/lib/mstpistation/sms-bridge-identity"
 os.makedirs(os.path.dirname(SMS_LOG), exist_ok=True)
 
 try:
@@ -121,7 +121,7 @@ class SMSBridge:
         else:
             identity = RNS.Identity()
             identity.to_file(IDENTITY_PATH)
-        self.router = LXMF.LXMRouter(storagepath="/var/lib/aetherium/lxmf-sms")
+        self.router = LXMF.LXMRouter(storagepath="/var/lib/mstpistation/lxmf-sms")
         self.source = self.router.register_delivery_identity(
             identity, display_name="SMS Bridge"
         )

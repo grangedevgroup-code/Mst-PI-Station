@@ -1,4 +1,4 @@
-"""Unit tests for Aetherium config management."""
+"""Unit tests for Mst-PI-Station config management."""
 
 import pytest
 import tempfile
@@ -13,7 +13,7 @@ from core.config import Config, _deep_merge
 
 @pytest.fixture
 def tmp_config(tmp_path):
-    cfg_file = tmp_path / "aetherium.yaml"
+    cfg_file = tmp_path / "mstpistation.yaml"
     cfg_data = {
         "node": {"name": "test-node", "profile": "relay"},
         "hotspot": {"ssid": "TestNet", "channel": 6},

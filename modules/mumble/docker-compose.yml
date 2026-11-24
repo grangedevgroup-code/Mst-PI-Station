@@ -3,15 +3,15 @@ version: "3.8"
 services:
   mumble:
     image: mumblevoip/mumble-server:latest
-    container_name: aetherium-mumble
+    container_name: mstpistation-mumble
     environment:
-      - MUMBLE_CONFIG_welcometext=Welcome to Aetherium Mesh Voice
+      - MUMBLE_CONFIG_welcometext=Welcome to Mst-PI-Station Mesh Voice
       - MUMBLE_CONFIG_allowhtml=false
       - MUMBLE_CONFIG_bandwidth=72000
       - MUMBLE_CONFIG_users=50
       - MUMBLE_CONFIG_serverpassword=
     volumes:
-      - /var/lib/aetherium/mumble:/data
+      - /var/lib/mstpistation/mumble:/data
     ports:
       - "64738:64738/tcp"
       - "64738:64738/udp"
@@ -24,4 +24,4 @@ services:
     logging:
       driver: journald
       options:
-        tag: aetherium-mumble
+        tag: mstpistation-mumble

@@ -2,10 +2,10 @@
 # Reticulum configuration module
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
 RNS_CONFIG_DIR="${RNS_CONFIG_DIR:-/etc/reticulum}"
-TEMPLATES_DIR="${TEMPLATES_DIR:-${AETHERIUM_DIR}/templates}"
+TEMPLATES_DIR="${TEMPLATES_DIR:-${MSTPISTATION_DIR}/templates}"
 RNS_USER="reticulum"
 
 log() { echo "[reticulum/configure] $*"; }
@@ -35,7 +35,7 @@ fi
 # Render config using Python Jinja2
 "${VENV}/bin/python3" << PYEOF
 import sys, os
-sys.path.insert(0, "${AETHERIUM_DIR}")
+sys.path.insert(0, "${MSTPISTATION_DIR}")
 from jinja2 import Environment, FileSystemLoader
 
 env = Environment(loader=FileSystemLoader("${TEMPLATES_DIR}"))
@@ -45,7 +45,7 @@ ctx = {
     "node_profile":         "${NODE_PROFILE:-relay}",
     "rns_transport":        ${RNS_TRANSPORT} == "true" or "${RNS_TRANSPORT}" == "true",
     "autointerface_enabled": True,
-    "autointerface_group":  "aetherium-${NODE_PROFILE:-relay}",
+    "autointerface_group":  "mstpistation-${NODE_PROFILE:-relay}",
     "tcp_server_enabled":   "${TCP_SERVER_ENABLED}" == "true",
     "tcp_server_port":      4242,
     "rnode_enabled":        "${RNODE_ENABLED}" == "true",

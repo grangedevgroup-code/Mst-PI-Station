@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 log() { echo "[ota] $*"; }
 
@@ -15,24 +15,24 @@ esac
 
 "${VENV}/bin/pip" install --quiet gnupg 2>/dev/null || true
 
-mkdir -p /var/lib/aetherium/ota/incoming \
-         /var/lib/aetherium/ota/applied \
-         /var/log/aetherium/ota
+mkdir -p /var/lib/mstpistation/ota/incoming \
+         /var/lib/mstpistation/ota/applied \
+         /var/log/mstpistation/ota
 
 # OTA watcher systemd service
-cat > /etc/systemd/system/aetherium-ota.service << SVC
+cat > /etc/systemd/system/mstpistation-ota.service << SVC
 [Unit]
-Description=Aetherium OTA Update Watcher
-After=network.target aetherium-syncthing.service
-Wants=aetherium-syncthing.service
+Description=Mst-PI-Station OTA Update Watcher
+After=network.target mstpistation-syncthing.service
+Wants=mstpistation-syncthing.service
 
 [Service]
 Type=simple
 User=root
-ExecStart=${VENV}/bin/python3 ${AETHERIUM_DIR}/modules/ota/watcher.py
+ExecStart=${VENV}/bin/python3 ${MSTPISTATION_DIR}/modules/ota/watcher.py
 Restart=on-failure
 RestartSec=30
-Environment=AETHERIUM_DIR=${AETHERIUM_DIR}
+Environment=MSTPISTATION_DIR=${MSTPISTATION_DIR}
 StandardOutput=journal
 StandardError=journal
 
@@ -42,4 +42,4 @@ SVC
 
 systemctl daemon-reload
 log "OTA update watcher installed"
-log "Drop update bundles (*.aeth-update) into /var/lib/aetherium/ota/incoming/"
+log "Drop update bundles (*.aeth-update) into /var/lib/mstpistation/ota/incoming/"

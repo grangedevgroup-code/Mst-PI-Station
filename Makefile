@@ -1,7 +1,7 @@
-# Aetherium Makefile
+# Mst-PI-Station Makefile
 # Development, testing, and deployment helpers
 
-INSTALL_DIR ?= /opt/aetherium
+INSTALL_DIR ?= /opt/mstpistation
 VENV        := $(INSTALL_DIR)/venv
 PYTHON      := $(VENV)/bin/python3
 PIP         := $(VENV)/bin/pip
@@ -11,9 +11,9 @@ PIP         := $(VENV)/bin/pip
 all: help
 
 help:
-	@echo "Aetherium build targets:"
+	@echo "Mst-PI-Station build targets:"
 	@echo ""
-	@echo "  make install         Install Aetherium to $(INSTALL_DIR)"
+	@echo "  make install         Install Mst-PI-Station to $(INSTALL_DIR)"
 	@echo "  make dev-install     Install in dev mode with editable packages"
 	@echo "  make venv            Create Python virtual environment"
 	@echo "  make lint            Run linting (flake8, shellcheck)"
@@ -25,7 +25,7 @@ help:
 	@echo ""
 
 install:
-	@echo "Installing Aetherium..."
+	@echo "Installing Mst-PI-Station..."
 	sudo bash install.sh
 
 dev-install:
@@ -54,7 +54,7 @@ test-hardware:
 	$(PYTHON) -m pytest tests/hardware/ -v
 
 status:
-	aetherium status
+	mstpistation status
 
 clean:
 	find . -name "*.pyc" -delete

@@ -1,4 +1,4 @@
-// Aetherium Dashboard — core JS
+// Mst-PI-Station Dashboard — core JS
 
 // Auto-refresh status every 30s
 let statusRefreshTimer;

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Aetherium Agent — background health monitor and watchdog daemon.
-Runs as aetherium-agent.service
+Mst-PI-Station Agent — background health monitor and watchdog daemon.
+Runs as mstpistation-agent.service
 """
 
 import os
@@ -15,18 +15,18 @@ import threading
 from pathlib import Path
 from typing import Dict, Any
 
-# Ensure we can import aetherium core
-AETHERIUM_DIR = Path(__file__).parent.parent
-sys.path.insert(0, str(AETHERIUM_DIR))
+# Ensure we can import mstpistation core
+MSTPISTATION_DIR = Path(__file__).parent.parent
+sys.path.insert(0, str(MSTPISTATION_DIR))
 
 from core.config import Config
 from core.hardware import Hardware
 
 # Paths
-STATUS_FILE = Path("/var/run/aetherium/status.json")
-LOG_FILE = Path("/var/log/aetherium/agent.log")
-PEERS_FILE = Path("/var/lib/aetherium/peers.json")
-PID_FILE = Path("/var/run/aetherium/agent.pid")
+STATUS_FILE = Path("/var/run/mstpistation/status.json")
+LOG_FILE = Path("/var/log/mstpistation/agent.log")
+PEERS_FILE = Path("/var/lib/mstpistation/peers.json")
+PID_FILE = Path("/var/run/mstpistation/agent.pid")
 
 # Timing
 HEALTH_CHECK_INTERVAL = 30       # seconds between health checks
@@ -43,7 +43,7 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout),
     ]
 )
-log = logging.getLogger("aetherium-agent")
+log = logging.getLogger("mstpistation-agent")
 
 
 def discover_services(config, hardware) -> list:
@@ -63,13 +63,13 @@ def discover_services(config, hardware) -> list:
 
     def _add(svc: str):
         svc = str(svc or "").strip()
-        if svc and svc not in seen and svc not in ("aetherium-agent", "aetherium-watchdog"):
+        if svc and svc not in seen and svc not in ("mstpistation-agent", "mstpistation-watchdog"):
             seen.add(svc)
             services.append(svc)
 
     try:
-        mm = ModuleManager(AETHERIUM_DIR, config, hardware)
-        pm = ProfileManager(AETHERIUM_DIR, config, hardware)
+        mm = ModuleManager(MSTPISTATION_DIR, config, hardware)
+        pm = ProfileManager(MSTPISTATION_DIR, config, hardware)
         profile_name = config.get("node.profile")
         profile = pm.load(profile_name) if profile_name else None
         module_names = list((profile or {}).get("modules", []))
@@ -80,12 +80,12 @@ def discover_services(config, hardware) -> list:
             if meta.get("type", "native") in ("docker", "container"):
                 continue
             svc = meta.get("service")
-            _add(svc if svc is not None else f"aetherium-{name}")
+            _add(svc if svc is not None else f"mstpistation-{name}")
     except Exception as e:
         log.debug(f"service discovery failed: {e}")
 
     if not services:   # safe fallback if discovery yields nothing
-        for svc in ("reticulum", "aetherium-hostapd", "batman-adv", "dnsmasq"):
+        for svc in ("reticulum", "mstpistation-hostapd", "batman-adv", "dnsmasq"):
             _add(svc)
     return services
 
@@ -211,7 +211,7 @@ class NetworkFailover:
 
 
 class PeerDiscovery:
-    """Discovers Aetherium peers on the mesh via batman-adv and Reticulum."""
+    """Discovers Mst-PI-Station peers on the mesh via batman-adv and Reticulum."""
 
     def __init__(self):
         self.peers: list = []
@@ -238,7 +238,7 @@ class PeerDiscovery:
             pass
 
         # Reticulum announce log — parse announced destinations
-        rns_log = Path("/var/log/aetherium/reticulum.log")
+        rns_log = Path("/var/log/mstpistation/reticulum.log")
         if rns_log.exists():
             try:
                 lines = rns_log.read_text().split("\n")[-200:]
@@ -267,7 +267,7 @@ class StatusCollector:
 
     def collect(self) -> Dict[str, Any]:
         status = {
-            "node": self.config.get("node.name", "aetherium-node"),
+            "node": self.config.get("node.name", "mstpistation-node"),
             "profile": self.config.get("node.profile", "unknown"),
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "uptime_seconds": self._uptime(),
@@ -335,8 +335,8 @@ class StatusCollector:
 
     def _service_states(self) -> Dict[str, str]:
         services = self.services or [
-            "reticulum", "aetherium-hostapd", "batman-adv",
-            "dnsmasq", "aetherium-lxmf"
+            "reticulum", "mstpistation-hostapd", "batman-adv",
+            "dnsmasq", "mstpistation-lxmf"
         ]
         states = {}
         for svc in services:
@@ -388,7 +388,7 @@ class StatusCollector:
         return stats
 
 
-class AetheriumAgent:
+class MstPiStationAgent:
     """Main agent process."""
 
     def __init__(self, watchdog_only: bool = False):
@@ -430,7 +430,7 @@ class AetheriumAgent:
 
     def run(self):
         mode = "watchdog-only" if self.watchdog_only else "full"
-        log.info(f"Aetherium agent starting ({mode}) — node: {self.config.get('node.name')}")
+        log.info(f"Mst-PI-Station agent starting ({mode}) — node: {self.config.get('node.name')}")
         self._write_pid()
 
         # Initial status write (full mode only)
@@ -499,8 +499,8 @@ class AetheriumAgent:
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(prog="aetherium-agent",
-                                     description="Aetherium node agent / watchdog")
+    parser = argparse.ArgumentParser(prog="mstpistation-agent",
+                                     description="Mst-PI-Station node agent / watchdog")
     parser.add_argument("--watchdog-only", action="store_true",
                         help="Run only the service self-healer (no status/failover/peer scan)")
     parser.add_argument("--once", action="store_true",
@@ -511,7 +511,7 @@ def main():
     for d in [STATUS_FILE.parent, LOG_FILE.parent, PEERS_FILE.parent]:
         d.mkdir(parents=True, exist_ok=True)
 
-    agent = AetheriumAgent(watchdog_only=args.watchdog_only)
+    agent = MstPiStationAgent(watchdog_only=args.watchdog_only)
     if args.once:
         if args.watchdog_only:
             agent.watchdog.check_and_heal()

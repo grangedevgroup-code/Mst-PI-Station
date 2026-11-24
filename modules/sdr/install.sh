@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
 
 log() { echo "[sdr] $*"; }
 
@@ -54,7 +54,7 @@ if [[ "${DUMP1090_BUILD}" == "1" ]] && ! command -v dump1090 &>/dev/null; then
 fi
 
 # rtl_433 config directory
-mkdir -p /etc/aetherium/sdr /var/log/aetherium/sdr
+mkdir -p /etc/mstpistation/sdr /var/log/mstpistation/sdr
 
 # udev rule for RTL-SDR dongles
 cat > /etc/udev/rules.d/90-rtlsdr.rules << 'EOF'
@@ -66,20 +66,20 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="2841", MODE="0664"
 EOF
 udevadm control --reload-rules 2>/dev/null || true
 
-# Add aetherium user to plugdev
-usermod -aG plugdev aetherium 2>/dev/null || true
+# Add mstpistation user to plugdev
+usermod -aG plugdev mstpistation 2>/dev/null || true
 
 # rtl_433 systemd service
-cat > /etc/systemd/system/aetherium-rtl433.service << 'SVC'
+cat > /etc/systemd/system/mstpistation-rtl433.service << 'SVC'
 [Unit]
-Description=Aetherium rtl_433 IoT/Weather Decoder
+Description=Mst-PI-Station rtl_433 IoT/Weather Decoder
 After=network.target
 ConditionPathExists=/dev/rtlsdr
 
 [Service]
 Type=simple
-User=aetherium
-ExecStart=/bin/bash /etc/aetherium/sdr/rtl433-start.sh
+User=mstpistation
+ExecStart=/bin/bash /etc/mstpistation/sdr/rtl433-start.sh
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
@@ -90,16 +90,16 @@ WantedBy=multi-user.target
 SVC
 
 # dump1090 systemd service
-cat > /etc/systemd/system/aetherium-dump1090.service << 'SVC'
+cat > /etc/systemd/system/mstpistation-dump1090.service << 'SVC'
 [Unit]
-Description=Aetherium dump1090 ADS-B Receiver
+Description=Mst-PI-Station dump1090 ADS-B Receiver
 After=network.target
 ConditionPathExists=/dev/rtlsdr
 
 [Service]
 Type=simple
-User=aetherium
-ExecStart=/bin/bash /etc/aetherium/sdr/dump1090-start.sh
+User=mstpistation
+ExecStart=/bin/bash /etc/mstpistation/sdr/dump1090-start.sh
 Restart=on-failure
 RestartSec=10
 

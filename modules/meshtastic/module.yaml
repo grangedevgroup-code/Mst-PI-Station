@@ -2,7 +2,7 @@ name: meshtastic
 version: "2.7.15"
 description: "Meshtastic — LoRa mesh radio bridge to Reticulum/LXMF and MQTT"
 type: native
-service: aetherium-meshtastic
+service: mstpistation-meshtastic
 binary: meshtastic
 requires_hardware: []
 depends: [reticulum, lxmf]

@@ -1,5 +1,5 @@
 [Unit]
-Description=Aetherium hostapd — Wi-Fi Access Point
+Description=Mst-PI-Station hostapd — Wi-Fi Access Point
 After=network.target batman-adv.service
 Before=dnsmasq.service
 
@@ -7,13 +7,13 @@ Before=dnsmasq.service
 Type=forking
 PIDFile=/run/hostapd/hostapd.pid
 ExecStartPre=/bin/mkdir -p /run/hostapd
-ExecStart=/usr/sbin/hostapd -B -P /run/hostapd/hostapd.pid /etc/aetherium/hostapd/hostapd.conf
+ExecStart=/usr/sbin/hostapd -B -P /run/hostapd/hostapd.pid /etc/mstpistation/hostapd/hostapd.conf
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=aetherium-hostapd
+SyslogIdentifier=mstpistation-hostapd
 
 [Install]
 WantedBy=multi-user.target

@@ -2,7 +2,7 @@ name: gitea
 version: "system"
 description: "Gitea — lightweight offline git server for code/config/doc sharing over mesh"
 type: docker
-service: aetherium-gitea
+service: mstpistation-gitea
 binary: docker
 requires_hardware: []
 needs_docker: true
@@ -12,4 +12,4 @@ resource_budget:
   memory: "100M"
   disk: "200M"
 profiles_default_on: [mesh-hub, local-services]
-notes: "Web UI at http://aetherium.local:3000. Admin setup on first visit."
+notes: "Web UI at http://mstpistation.local:3000. Admin setup on first visit."

@@ -2,25 +2,25 @@
 set -euo pipefail
 
 TAILSCALE_AUTH_KEY="${TAILSCALE_AUTH_KEY:-}"
-TAILSCALE_HOSTNAME="${TAILSCALE_HOSTNAME:-${NODE_NAME:-aetherium}}"
+TAILSCALE_HOSTNAME="${TAILSCALE_HOSTNAME:-${NODE_NAME:-mstpistation}}"
 TAILSCALE_EXIT_NODE="${TAILSCALE_EXIT_NODE:-0}"   # Advertise as exit node
 TAILSCALE_SUBNET="${TAILSCALE_SUBNET:-}"          # e.g. 192.168.100.0/24 for mesh subnet
 
 log() { echo "[tailscale/configure] $*"; }
 
-# Load auth key from aetherium.yaml if not in env
-if [[ -z "${TAILSCALE_AUTH_KEY}" ]] && [[ -f /etc/aetherium/aetherium.yaml ]]; then
+# Load auth key from mstpistation.yaml if not in env
+if [[ -z "${TAILSCALE_AUTH_KEY}" ]] && [[ -f /etc/mstpistation/mstpistation.yaml ]]; then
     TAILSCALE_AUTH_KEY=$(python3 -c "
 import yaml
-cfg = yaml.safe_load(open('/etc/aetherium/aetherium.yaml'))
+cfg = yaml.safe_load(open('/etc/mstpistation/mstpistation.yaml'))
 print(cfg.get('tailscale', {}).get('auth_key', ''))
 " 2>/dev/null || echo "")
 fi
 
 if [[ -z "${TAILSCALE_AUTH_KEY}" ]]; then
-    log "WARNING: No tailscale.auth_key in aetherium.yaml"
+    log "WARNING: No tailscale.auth_key in mstpistation.yaml"
     log "Run manually: tailscale up --hostname ${TAILSCALE_HOSTNAME}"
-    log "Or set tailscale.auth_key in /etc/aetherium/aetherium.yaml and re-deploy"
+    log "Or set tailscale.auth_key in /etc/mstpistation/mstpistation.yaml and re-deploy"
     exit 0
 fi
 

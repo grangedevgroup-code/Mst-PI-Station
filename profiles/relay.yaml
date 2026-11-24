@@ -13,7 +13,7 @@ network:
 
 hotspot:
   enabled: true
-  ssid: "Aetherium-Relay"
+  ssid: "Mst-PI-Station-Relay"
   channel: 6
   band: "2.4GHz"
   password: ""
@@ -30,7 +30,7 @@ reticulum:
   interfaces:
     - type: AutoInterface
       enabled: true
-      group: "aetherium-relay"
+      group: "mstpistation-relay"
     - type: TCPServerInterface
       enabled: true
       port: 4242

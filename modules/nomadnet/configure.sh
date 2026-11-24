@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
-NOMADNET_HOME="/var/lib/aetherium/nomadnet"
-NODE_NAME="${NODE_NAME:-aetherium-node}"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
+NOMADNET_HOME="/var/lib/mstpistation/nomadnet"
+NODE_NAME="${NODE_NAME:-mstpistation-node}"
 NODE_PROFILE="${NODE_PROFILE:-relay}"
 
 log() { echo "[nomadnet/configure] $*"; }
@@ -33,11 +33,11 @@ CONF
 
 # Write the node's home page
 cat > "${NOMADNET_HOME}/pages/index.mu" << PAGE
-#!c=Aetherium Node
+#!c=Mst-PI-Station Node
 > ${NODE_NAME}
 > Profile: ${NODE_PROFILE}
 
-This is an Aetherium communications node providing:
+This is an Mst-PI-Station communications node providing:
 
   * Resilient mesh networking
   * Encrypted messaging via LXMF
@@ -51,25 +51,24 @@ Reticulum address: see node announcements.
 
 >> Status
 
-Uptime: see dashboard at aetherium.local:8080
+Uptime: see dashboard at mstpistation.local:8080
 
->> Aetherium Project
+>> Mst-PI-Station Project
 
 Resilient mesh communications for field deployments.
-https://aetherium.io
 PAGE
 
 chown -R reticulum:reticulum "${NOMADNET_HOME}" 2>/dev/null || true
 
 # Restart service
-systemctl enable aetherium-nomadnet 2>/dev/null || true
-systemctl restart aetherium-nomadnet || true
+systemctl enable mstpistation-nomadnet 2>/dev/null || true
+systemctl restart mstpistation-nomadnet || true
 
 sleep 2
-if systemctl is-active aetherium-nomadnet &>/dev/null; then
+if systemctl is-active mstpistation-nomadnet &>/dev/null; then
     log "NomadNet node running as '${NODE_NAME}'"
 else
-    log "WARNING: NomadNet not active. Check: journalctl -u aetherium-nomadnet"
+    log "WARNING: NomadNet not active. Check: journalctl -u mstpistation-nomadnet"
 fi
 
 log "NomadNet configuration complete"

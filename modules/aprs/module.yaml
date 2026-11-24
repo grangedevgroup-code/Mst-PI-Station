@@ -2,7 +2,7 @@ name: aprs
 version: "system"
 description: "APRS — Automatic Packet Reporting System via Direwolf TNC (ham radio / SDR)"
 type: native
-service: aetherium-direwolf
+service: mstpistation-direwolf
 binary: direwolf
 requires_hardware: []
 resource_budget:

@@ -1,8 +1,8 @@
 name: ota
 version: "system"
-description: "OTA updates — distributes Aetherium updates across mesh via Syncthing file sync"
+description: "OTA updates — distributes Mst-PI-Station updates across mesh via Syncthing file sync"
 type: native
-service: aetherium-ota
+service: mstpistation-ota
 binary: python3
 requires_hardware: []
 depends: [syncthing]

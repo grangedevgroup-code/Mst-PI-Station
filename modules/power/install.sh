@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 log() { echo "[power] $*"; }
 
@@ -19,21 +19,21 @@ case "${DISTRO_FAMILY}" in
 esac
 
 # Power management systemd service
-cat > /etc/systemd/system/aetherium-power.service << 'SVC'
+cat > /etc/systemd/system/mstpistation-power.service << 'SVC'
 [Unit]
-Description=Aetherium Power Management
+Description=Mst-PI-Station Power Management
 After=multi-user.target
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/bin/bash /etc/aetherium/power/apply-power-profile.sh
-ExecStop=/bin/bash /etc/aetherium/power/apply-power-profile.sh restore
+ExecStart=/bin/bash /etc/mstpistation/power/apply-power-profile.sh
+ExecStop=/bin/bash /etc/mstpistation/power/apply-power-profile.sh restore
 
 [Install]
 WantedBy=multi-user.target
 SVC
 
 systemctl daemon-reload
-mkdir -p /etc/aetherium/power
+mkdir -p /etc/mstpistation/power
 log "Power management installed"

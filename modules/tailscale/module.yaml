@@ -10,4 +10,4 @@ resource_budget:
   memory: "20M"
   disk: "30M"
 profiles_default_on: []
-notes: "Requires tailscale.auth_key in aetherium.yaml. Disabled by default — enable explicitly."
+notes: "Requires tailscale.auth_key in mstpistation.yaml. Disabled by default — enable explicitly."

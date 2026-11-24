@@ -86,8 +86,8 @@ detect_distro() {
     fi
 
     # Write for later use
-    mkdir -p /etc/aetherium
-    cat > /etc/aetherium/distro.env << EOF
+    mkdir -p /etc/mstpistation
+    cat > /etc/mstpistation/distro.env << EOF
 DISTRO_FAMILY="${DISTRO_FAMILY}"
 DISTRO_NAME="${DISTRO_NAME}"
 DISTRO_VERSION="${DISTRO_VERSION}"
@@ -101,7 +101,7 @@ EOF
 # Package install abstraction used by modules
 pkg_install() {
     # shellcheck source=/dev/null
-    [[ -f /etc/aetherium/distro.env ]] && source /etc/aetherium/distro.env
+    [[ -f /etc/mstpistation/distro.env ]] && source /etc/mstpistation/distro.env
 
     case "${DISTRO_FAMILY}" in
         debian)
@@ -140,8 +140,8 @@ pkg_installed() {
     esac
 }
 
-svc_enable()  { "${AETHERIUM_INSTALL_DIR:-/opt/aetherium}/installer/service-ctl.sh" enable "$@"; }
-svc_start()   { "${AETHERIUM_INSTALL_DIR:-/opt/aetherium}/installer/service-ctl.sh" start "$@"; }
-svc_restart() { "${AETHERIUM_INSTALL_DIR:-/opt/aetherium}/installer/service-ctl.sh" restart "$@"; }
-svc_stop()    { "${AETHERIUM_INSTALL_DIR:-/opt/aetherium}/installer/service-ctl.sh" stop "$@"; }
-svc_status()  { "${AETHERIUM_INSTALL_DIR:-/opt/aetherium}/installer/service-ctl.sh" status "$@"; }
+svc_enable()  { "${MSTPISTATION_INSTALL_DIR:-/opt/mstpistation}/installer/service-ctl.sh" enable "$@"; }
+svc_start()   { "${MSTPISTATION_INSTALL_DIR:-/opt/mstpistation}/installer/service-ctl.sh" start "$@"; }
+svc_restart() { "${MSTPISTATION_INSTALL_DIR:-/opt/mstpistation}/installer/service-ctl.sh" restart "$@"; }
+svc_stop()    { "${MSTPISTATION_INSTALL_DIR:-/opt/mstpistation}/installer/service-ctl.sh" stop "$@"; }
+svc_status()  { "${MSTPISTATION_INSTALL_DIR:-/opt/mstpistation}/installer/service-ctl.sh" status "$@"; }

@@ -1,4 +1,4 @@
-"""Profile loading and resolution for Aetherium."""
+"""Profile loading and resolution for Mst-PI-Station."""
 
 import yaml
 from pathlib import Path

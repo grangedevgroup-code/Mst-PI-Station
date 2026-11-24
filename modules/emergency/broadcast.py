@@ -7,19 +7,19 @@ import json
 import argparse
 import logging
 
-AETHERIUM_DIR = os.environ.get("AETHERIUM_DIR", "/opt/aetherium")
-sys.path.insert(0, os.path.join(AETHERIUM_DIR, "venv/lib"))
+MSTPISTATION_DIR = os.environ.get("MSTPISTATION_DIR", "/opt/mstpistation")
+sys.path.insert(0, os.path.join(MSTPISTATION_DIR, "venv/lib"))
 
 try:
     import RNS
     import LXMF
 except ImportError:
-    print("ERROR: Reticulum/LXMF not available. Is Aetherium installed?", file=sys.stderr)
+    print("ERROR: Reticulum/LXMF not available. Is Mst-PI-Station installed?", file=sys.stderr)
     sys.exit(1)
 
 LOG = logging.getLogger("emergency")
-IDENTITY_PATH = "/var/lib/aetherium/emergency-identity"
-PEERS_FILE = "/var/run/aetherium/status.json"
+IDENTITY_PATH = "/var/lib/mstpistation/emergency-identity"
+PEERS_FILE = "/var/run/mstpistation/status.json"
 
 
 def load_peers():
@@ -40,10 +40,10 @@ def broadcast(message: str, retransmit: int = 3, interval: int = 30):
         identity = RNS.Identity()
         identity.to_file(IDENTITY_PATH)
 
-    router = LXMF.LXMRouter(storagepath="/var/lib/aetherium/lxmf-emergency")
+    router = LXMF.LXMRouter(storagepath="/var/lib/mstpistation/lxmf-emergency")
     source = router.register_delivery_identity(identity, display_name="EMERGENCY")
 
-    node_name = os.environ.get("NODE_NAME", "Aetherium Node")
+    node_name = os.environ.get("NODE_NAME", "Mst-PI-Station Node")
     full_message = f"[EMERGENCY from {node_name}] {message}"
 
     # Broadcast via LXMF propagation (reaches all nodes on network)
@@ -69,7 +69,7 @@ def broadcast(message: str, retransmit: int = 3, interval: int = 30):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Aetherium emergency broadcast")
+    parser = argparse.ArgumentParser(description="Mst-PI-Station emergency broadcast")
     parser.add_argument("message", nargs="+", help="Emergency message text")
     parser.add_argument("--retransmit", type=int, default=3,
                         help="Number of times to retransmit (default: 3)")

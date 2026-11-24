@@ -10,7 +10,7 @@ for candidate in /dev/gps0 /dev/ttyUSB0 /dev/ttyAMA0 /dev/ttyS0 /dev/ttyACM0; do
 done
 
 if [[ -z "${GPS_DEV}" ]]; then
-    log "No GPS device found. Connect USB GPS and re-run: aetherium module enable gps"
+    log "No GPS device found. Connect USB GPS and re-run: mstpistation module enable gps"
     # Still write gpsd config so it auto-starts when device appears
     GPS_DEV="/dev/ttyUSB0"
 fi
@@ -56,15 +56,15 @@ else
 fi
 
 # Also configure node location update via gpsd
-cat > /etc/systemd/system/aetherium-gps-location.service << LOCSVC
+cat > /etc/systemd/system/mstpistation-gps-location.service << LOCSVC
 [Unit]
-Description=Aetherium GPS Location Update
+Description=Mst-PI-Station GPS Location Update
 After=gpsd.service
 Requires=gpsd.service
 
 [Service]
 Type=simple
-ExecStart=/opt/aetherium/venv/bin/python3 /opt/aetherium/modules/gps/location-updater.py
+ExecStart=/opt/mstpistation/venv/bin/python3 /opt/mstpistation/modules/gps/location-updater.py
 Restart=on-failure
 RestartSec=30
 
@@ -73,7 +73,7 @@ WantedBy=multi-user.target
 LOCSVC
 
 systemctl daemon-reload
-systemctl enable aetherium-gps-location 2>/dev/null || true
-systemctl start aetherium-gps-location 2>/dev/null || true
+systemctl enable mstpistation-gps-location 2>/dev/null || true
+systemctl start mstpistation-gps-location 2>/dev/null || true
 
 log "GPS configuration complete"

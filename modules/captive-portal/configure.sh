@@ -1,41 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-NODE_NAME="${NODE_NAME:-Aetherium Node}"
-HOTSPOT_SSID="${HOTSPOT_SSID:-Aetherium}"
-DASHBOARD_URL="${DASHBOARD_URL:-http://aetherium.local:8080}"
+NODE_NAME="${NODE_NAME:-Mst-PI-Station Node}"
+HOTSPOT_SSID="${HOTSPOT_SSID:-Mst-PI-Station}"
+DASHBOARD_URL="${DASHBOARD_URL:-http://mstpistation.local:8080}"
 PORTAL_CONTACT="${PORTAL_CONTACT:-}"
 
 log() { echo "[captive-portal/configure] $*"; }
 
 # Read node info for portal page
 APRS_CALLSIGN="N0CALL"
-if [[ -f /etc/aetherium/aetherium.yaml ]]; then
+if [[ -f /etc/mstpistation/mstpistation.yaml ]]; then
     APRS_CALLSIGN=$(python3 -c "
 import yaml
-cfg = yaml.safe_load(open('/etc/aetherium/aetherium.yaml'))
+cfg = yaml.safe_load(open('/etc/mstpistation/mstpistation.yaml'))
 print(cfg.get('aprs', {}).get('callsign', 'N0CALL'))
 " 2>/dev/null || echo "N0CALL")
 fi
 
 GPS_TEXT=""
-if [[ -f /var/lib/aetherium/location.json ]]; then
+if [[ -f /var/lib/mstpistation/location.json ]]; then
     GPS_TEXT=$(python3 -c "
 import json
-d = json.load(open('/var/lib/aetherium/location.json'))
+d = json.load(open('/var/lib/mstpistation/location.json'))
 lat, lon = d.get('lat', 0), d.get('lon', 0)
 print(f'{lat:.4f}°, {lon:.4f}°')
 " 2>/dev/null || echo "")
 fi
 
 # Build portal HTML
-cat > /var/www/aetherium-portal/index.html << HTML
+cat > /var/www/mstpistation-portal/index.html << HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aetherium — ${NODE_NAME}</title>
+<title>Mst-PI-Station — ${NODE_NAME}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -63,7 +63,7 @@ cat > /var/www/aetherium-portal/index.html << HTML
 <div class="card">
   <div class="logo">Æ</div>
   <h1>${NODE_NAME}</h1>
-  <p class="subtitle">Aetherium Mesh Node — ${HOTSPOT_SSID}</p>
+  <p class="subtitle">Mst-PI-Station Mesh Node — ${HOTSPOT_SSID}</p>
 
   <div class="info-grid">
     <div class="info-box">
@@ -93,7 +93,7 @@ GRID
   <a href="${DASHBOARD_URL}" class="btn">Open Dashboard</a>
 
   $([ -n "${PORTAL_CONTACT}" ] && echo "<p class=\"footer\">Contact: ${PORTAL_CONTACT}</p>")
-  <p class="footer">Aetherium Mesh — open-source off-grid communications</p>
+  <p class="footer">Mst-PI-Station Mesh — open-source off-grid communications</p>
 </div>
 </body>
 </html>
@@ -102,4 +102,4 @@ HTML
 # Validate and reload nginx
 nginx -t 2>/dev/null && systemctl reload nginx 2>/dev/null || systemctl restart nginx || true
 
-log "Captive portal live at http://aetherium.local"
+log "Captive portal live at http://mstpistation.local"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
 
 log() { echo "[aprs] $*"; }
 
@@ -30,22 +30,22 @@ else
     log "WARNING: direwolf not found. APRS will not function."
 fi
 
-mkdir -p /etc/aetherium/aprs /var/log/aetherium/aprs /var/lib/aetherium/aprs
+mkdir -p /etc/mstpistation/aprs /var/log/mstpistation/aprs /var/lib/mstpistation/aprs
 
 # Install systemd service
-cat > /etc/systemd/system/aetherium-direwolf.service << SVC
+cat > /etc/systemd/system/mstpistation-direwolf.service << SVC
 [Unit]
-Description=Aetherium Direwolf APRS TNC
+Description=Mst-PI-Station Direwolf APRS TNC
 After=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/direwolf -c /etc/aetherium/aprs/direwolf.conf -t 0 -a 0
+ExecStart=/usr/bin/direwolf -c /etc/mstpistation/aprs/direwolf.conf -t 0 -a 0
 Restart=on-failure
 RestartSec=15
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=aetherium-direwolf
+SyslogIdentifier=mstpistation-direwolf
 User=root
 
 [Install]

@@ -99,7 +99,7 @@ run_preflight() {
     # Existing conflicting services
     for svc in wpa_supplicant hostapd; do
         if systemctl is-active "${svc}" &>/dev/null; then
-            preflight_check "Conflict: ${svc}" "warn" "${svc} is running — Aetherium will reconfigure it"
+            preflight_check "Conflict: ${svc}" "warn" "${svc} is running — Mst-PI-Station will reconfigure it"
         fi
     done
 

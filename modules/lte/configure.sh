@@ -13,7 +13,7 @@ fi
 
 if [[ -z "${MODEM_IDX}" ]]; then
     log "No modem found — will retry when modem is connected."
-    log "Run 'aetherium module enable lte' after connecting modem."
+    log "Run 'mstpistation module enable lte' after connecting modem."
     exit 0
 fi
 
@@ -121,12 +121,12 @@ command -v nmcli &>/dev/null && systemctl is-active NetworkManager &>/dev/null &
 
 if [[ "${NM_AVAILABLE}" == "1" ]]; then
     log "Configuring via NetworkManager"
-    NM_CONN_FILE="/etc/NetworkManager/system-connections/aetherium-lte.nmconnection"
+    NM_CONN_FILE="/etc/NetworkManager/system-connections/mstpistation-lte.nmconnection"
     mkdir -p /etc/NetworkManager/system-connections
 
     cat > "${NM_CONN_FILE}" << NMCONN
 [connection]
-id=aetherium-lte
+id=mstpistation-lte
 type=gsm
 autoconnect=true
 timestamp=0
@@ -145,7 +145,7 @@ method=auto
 NMCONN
     chmod 600 "${NM_CONN_FILE}"
     nmcli connection reload 2>/dev/null || true
-    nmcli connection up aetherium-lte 2>/dev/null || log "NM connection pending — modem may still be initializing"
+    nmcli connection up mstpistation-lte 2>/dev/null || log "NM connection pending — modem may still be initializing"
 
 elif command -v mmcli &>/dev/null; then
     # Fallback: connect directly via mmcli (works on systemd-networkd or minimal systems)
@@ -158,7 +158,7 @@ elif command -v mmcli &>/dev/null; then
     # Write a systemd-networkd .network file so the interface gets DHCP automatically
     if [[ -d /etc/systemd/network ]]; then
         for iface_candidate in usb0 wwan0 wwan0_0; do
-            cat > "/etc/systemd/network/20-aetherium-lte-${iface_candidate}.network" << NETD
+            cat > "/etc/systemd/network/20-mstpistation-lte-${iface_candidate}.network" << NETD
 [Match]
 Name=${iface_candidate}
 

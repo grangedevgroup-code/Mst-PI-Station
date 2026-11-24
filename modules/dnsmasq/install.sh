@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 log() { echo "[dnsmasq] $*"; }
 
@@ -27,6 +27,6 @@ if [[ -f "${NM_MAIN}" ]]; then
     fi
 fi
 
-mkdir -p /etc/aetherium/dnsmasq /var/log/aetherium
+mkdir -p /etc/mstpistation/dnsmasq /var/log/mstpistation
 
 log "dnsmasq installation complete"

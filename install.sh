@@ -1,20 +1,19 @@
 #!/usr/bin/env bash
-# Aetherium Installer
-# Usage: curl -fsSL https://get.aetherium.io/install | sudo bash
-#        sudo bash install.sh [--profile relay] [--no-interactive]
+# Mst-PI-Station Installer
+# Usage: sudo bash install.sh [--profile relay] [--no-interactive]
 set -euo pipefail
 
-AETHERIUM_VERSION="0.1.0"
-AETHERIUM_INSTALL_DIR="/opt/aetherium"
-AETHERIUM_CONFIG_DIR="/etc/aetherium"
-AETHERIUM_DATA_DIR="/var/lib/aetherium"
-AETHERIUM_LOG_DIR="/var/log/aetherium"
-AETHERIUM_RUN_DIR="/var/run/aetherium"
-AETHERIUM_BIN="/usr/local/bin/aetherium"
+MSTPISTATION_VERSION="0.1.0"
+MSTPISTATION_INSTALL_DIR="/opt/mstpistation"
+MSTPISTATION_CONFIG_DIR="/etc/mstpistation"
+MSTPISTATION_DATA_DIR="/var/lib/mstpistation"
+MSTPISTATION_LOG_DIR="/var/log/mstpistation"
+MSTPISTATION_RUN_DIR="/var/run/mstpistation"
+MSTPISTATION_BIN="/usr/local/bin/mstpistation"
 
-PROFILE="${AETHERIUM_PROFILE:-}"
-NON_INTERACTIVE="${AETHERIUM_NON_INTERACTIVE:-0}"
-REPO_URL="${AETHERIUM_REPO:-https://github.com/aetherium-project/aetherium}"
+PROFILE="${MSTPISTATION_PROFILE:-}"
+NON_INTERACTIVE="${MSTPISTATION_NON_INTERACTIVE:-0}"
+REPO_URL="${MSTPISTATION_REPO:-https://github.com/mstpistation-project/mstpistation}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ── Colours ──────────────────────────────────────────────────────────────────
@@ -42,7 +41,7 @@ cat << 'EOF'
     ╚═══════════════════════════════════════════╝
 
 EOF
-    echo -e "  ${BOLD}Version:${NC} ${AETHERIUM_VERSION}"
+    echo -e "  ${BOLD}Version:${NC} ${MSTPISTATION_VERSION}"
     echo -e "  ${BOLD}Target:${NC}  $(uname -m) / $(uname -s)"
     echo ""
 }
@@ -53,7 +52,7 @@ parse_args() {
         case "$1" in
             --profile|-p) PROFILE="$2"; shift 2 ;;
             --no-interactive) NON_INTERACTIVE=1; shift ;;
-            --dir) AETHERIUM_INSTALL_DIR="$2"; shift 2 ;;
+            --dir) MSTPISTATION_INSTALL_DIR="$2"; shift 2 ;;
             --help|-h) usage; exit 0 ;;
             *) die "Unknown argument: $1" ;;
         esac
@@ -66,7 +65,7 @@ usage() {
     echo "Options:"
     echo "  --profile <name>    Deploy profile immediately (relay|field-node|hotspot|mesh-hub|emergency)"
     echo "  --no-interactive    Skip interactive prompts"
-    echo "  --dir <path>        Installation directory (default: /opt/aetherium)"
+    echo "  --dir <path>        Installation directory (default: /opt/mstpistation)"
     echo "  --help              Show this help"
     echo ""
     echo "Examples:"
@@ -77,7 +76,7 @@ usage() {
 # ── Privilege check ───────────────────────────────────────────────────────────
 check_root() {
     if [[ $EUID -ne 0 ]]; then
-        die "Aetherium installer must be run as root. Try: sudo bash install.sh"
+        die "Mst-PI-Station installer must be run as root. Try: sudo bash install.sh"
     fi
 }
 
@@ -86,10 +85,10 @@ source_installer() {
     local installer_dir
     if [[ -f "${SCRIPT_DIR}/installer/detect-distro.sh" ]]; then
         installer_dir="${SCRIPT_DIR}/installer"
-    elif [[ -f "${AETHERIUM_INSTALL_DIR}/installer/detect-distro.sh" ]]; then
-        installer_dir="${AETHERIUM_INSTALL_DIR}/installer"
+    elif [[ -f "${MSTPISTATION_INSTALL_DIR}/installer/detect-distro.sh" ]]; then
+        installer_dir="${MSTPISTATION_INSTALL_DIR}/installer"
     else
-        die "Cannot find installer scripts. Is Aetherium installed to ${AETHERIUM_INSTALL_DIR}?"
+        die "Cannot find installer scripts. Is Mst-PI-Station installed to ${MSTPISTATION_INSTALL_DIR}?"
     fi
     # shellcheck source=/dev/null
     source "${installer_dir}/detect-distro.sh"
@@ -136,48 +135,48 @@ install_deps() {
 # ── Set up Python virtual environment ────────────────────────────────────────
 setup_venv() {
     info "Setting up Python environment..."
-    python3 -m venv "${AETHERIUM_INSTALL_DIR}/venv"
-    "${AETHERIUM_INSTALL_DIR}/venv/bin/pip" install --quiet --upgrade pip
-    "${AETHERIUM_INSTALL_DIR}/venv/bin/pip" install --quiet \
+    python3 -m venv "${MSTPISTATION_INSTALL_DIR}/venv"
+    "${MSTPISTATION_INSTALL_DIR}/venv/bin/pip" install --quiet --upgrade pip
+    "${MSTPISTATION_INSTALL_DIR}/venv/bin/pip" install --quiet \
         jinja2 pyyaml click rich fastapi uvicorn[standard] \
         psutil python-daemon requests
     log "Python environment ready"
 }
 
-# ── Copy Aetherium files ──────────────────────────────────────────────────────
+# ── Copy Mst-PI-Station files ──────────────────────────────────────────────────────
 install_files() {
-    info "Installing Aetherium to ${AETHERIUM_INSTALL_DIR}..."
-    if [[ "${SCRIPT_DIR}" != "${AETHERIUM_INSTALL_DIR}" ]]; then
+    info "Installing Mst-PI-Station to ${MSTPISTATION_INSTALL_DIR}..."
+    if [[ "${SCRIPT_DIR}" != "${MSTPISTATION_INSTALL_DIR}" ]]; then
         if command -v rsync &>/dev/null; then
             rsync -a --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' \
-                "${SCRIPT_DIR}/" "${AETHERIUM_INSTALL_DIR}/"
+                "${SCRIPT_DIR}/" "${MSTPISTATION_INSTALL_DIR}/"
         else
             # Fallback when rsync is unavailable (e.g. minimal OpenWrt images)
-            mkdir -p "${AETHERIUM_INSTALL_DIR}"
-            cp -a "${SCRIPT_DIR}/." "${AETHERIUM_INSTALL_DIR}/"
-            rm -rf "${AETHERIUM_INSTALL_DIR}/.git" 2>/dev/null || true
-            find "${AETHERIUM_INSTALL_DIR}" -name '__pycache__' -type d -prune \
+            mkdir -p "${MSTPISTATION_INSTALL_DIR}"
+            cp -a "${SCRIPT_DIR}/." "${MSTPISTATION_INSTALL_DIR}/"
+            rm -rf "${MSTPISTATION_INSTALL_DIR}/.git" 2>/dev/null || true
+            find "${MSTPISTATION_INSTALL_DIR}" -name '__pycache__' -type d -prune \
                 -exec rm -rf {} + 2>/dev/null || true
         fi
     fi
 
     # Create runtime directories
-    mkdir -p "${AETHERIUM_CONFIG_DIR}/site" \
-             "${AETHERIUM_DATA_DIR}" \
-             "${AETHERIUM_LOG_DIR}" \
-             "${AETHERIUM_RUN_DIR}"
+    mkdir -p "${MSTPISTATION_CONFIG_DIR}/site" \
+             "${MSTPISTATION_DATA_DIR}" \
+             "${MSTPISTATION_LOG_DIR}" \
+             "${MSTPISTATION_RUN_DIR}"
 
     # Install CLI
-    cat > "${AETHERIUM_BIN}" << WRAPPER
+    cat > "${MSTPISTATION_BIN}" << WRAPPER
 #!/usr/bin/env bash
-exec "${AETHERIUM_INSTALL_DIR}/venv/bin/python3" "${AETHERIUM_INSTALL_DIR}/bin/aetherium" "\$@"
+exec "${MSTPISTATION_INSTALL_DIR}/venv/bin/python3" "${MSTPISTATION_INSTALL_DIR}/bin/mstpistation" "\$@"
 WRAPPER
-    chmod +x "${AETHERIUM_BIN}"
+    chmod +x "${MSTPISTATION_BIN}"
 
     # Set permissions
-    chmod +x "${AETHERIUM_INSTALL_DIR}/bin/aetherium"
-    chmod +x "${AETHERIUM_INSTALL_DIR}/installer/"*.sh
-    find "${AETHERIUM_INSTALL_DIR}/modules" -name "*.sh" -exec chmod +x {} \;
+    chmod +x "${MSTPISTATION_INSTALL_DIR}/bin/mstpistation"
+    chmod +x "${MSTPISTATION_INSTALL_DIR}/installer/"*.sh
+    find "${MSTPISTATION_INSTALL_DIR}/modules" -name "*.sh" -exec chmod +x {} \;
 
     log "Files installed"
 }
@@ -189,12 +188,12 @@ install_systemd() {
         return
     fi
     info "Installing systemd services..."
-    install -m644 "${AETHERIUM_INSTALL_DIR}/systemd/aetherium-agent.service" \
+    install -m644 "${MSTPISTATION_INSTALL_DIR}/systemd/mstpistation-agent.service" \
         /etc/systemd/system/
-    install -m644 "${AETHERIUM_INSTALL_DIR}/systemd/aetherium-watchdog.service" \
+    install -m644 "${MSTPISTATION_INSTALL_DIR}/systemd/mstpistation-watchdog.service" \
         /etc/systemd/system/
     systemctl daemon-reload
-    systemctl enable aetherium-agent.service
+    systemctl enable mstpistation-agent.service
     log "Systemd services installed"
 }
 
@@ -255,7 +254,7 @@ select_profile() {
     echo "  6) emergency      - Minimal emergency communications node"
     echo "  7) solar-relay    - Low-power solar relay"
     echo "  8) local-services - Local file sharing and offline content server"
-    echo "  9) skip           - Install only, deploy later with: aetherium deploy <profile>"
+    echo "  9) skip           - Install only, deploy later with: mstpistation deploy <profile>"
     echo ""
     read -rp "Enter selection [1-9] or press Enter to accept recommendation: " sel
     if [[ -z "${sel}" ]]; then
@@ -279,7 +278,7 @@ select_profile() {
 
 # ── Write initial config ──────────────────────────────────────────────────────
 write_initial_config() {
-    local cfg="${AETHERIUM_CONFIG_DIR}/aetherium.yaml"
+    local cfg="${MSTPISTATION_CONFIG_DIR}/mstpistation.yaml"
     if [[ -f "${cfg}" ]]; then
         warn "Config already exists at ${cfg} — not overwriting"
         return
@@ -287,10 +286,10 @@ write_initial_config() {
     info "Writing initial configuration..."
 
     local hostname
-    hostname=$(hostname -s 2>/dev/null || echo "aetherium-node")
+    hostname=$(hostname -s 2>/dev/null || echo "mstpistation-node")
 
-    cp "${AETHERIUM_INSTALL_DIR}/aetherium.yaml.example" "${cfg}"
-    sed -i "s/aetherium-node/${hostname}/g" "${cfg}"
+    cp "${MSTPISTATION_INSTALL_DIR}/mstpistation.yaml.example" "${cfg}"
+    sed -i "s/mstpistation-node/${hostname}/g" "${cfg}"
 
     log "Configuration written to ${cfg}"
 }
@@ -299,11 +298,11 @@ write_initial_config() {
 print_summary() {
     echo ""
     echo -e "${GREEN}╔═══════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║        Aetherium Install Complete!        ║${NC}"
+    echo -e "${GREEN}║        Mst-PI-Station Install Complete!        ║${NC}"
     echo -e "${GREEN}╚═══════════════════════════════════════════╝${NC}"
     echo ""
-    echo -e "  ${BOLD}Install dir:${NC}  ${AETHERIUM_INSTALL_DIR}"
-    echo -e "  ${BOLD}Config dir:${NC}   ${AETHERIUM_CONFIG_DIR}"
+    echo -e "  ${BOLD}Install dir:${NC}  ${MSTPISTATION_INSTALL_DIR}"
+    echo -e "  ${BOLD}Config dir:${NC}   ${MSTPISTATION_CONFIG_DIR}"
     echo -e "  ${BOLD}Hardware:${NC}     ${HW_MODEL:-unknown}"
     echo -e "  ${BOLD}Distro:${NC}       ${DISTRO_NAME:-unknown}"
     echo -e "  ${BOLD}Arch:${NC}         $(uname -m)"
@@ -313,13 +312,13 @@ print_summary() {
     echo ""
     echo -e "  ${BOLD}Next steps:${NC}"
     if [[ -z "${PROFILE}" ]]; then
-        echo "    aetherium deploy relay"
-        echo "    aetherium deploy field-node"
-        echo "    aetherium deploy hotspot"
+        echo "    mstpistation deploy relay"
+        echo "    mstpistation deploy field-node"
+        echo "    mstpistation deploy hotspot"
     fi
-    echo "    aetherium status"
-    echo "    aetherium module list"
-    echo "    nano /etc/aetherium/aetherium.yaml"
+    echo "    mstpistation status"
+    echo "    mstpistation module list"
+    echo "    nano /etc/mstpistation/mstpistation.yaml"
     echo ""
     echo -e "  ${BOLD}Dashboard:${NC}  http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo 'localhost'):8080"
     echo ""
@@ -343,13 +342,13 @@ main() {
 
     if [[ -n "${PROFILE}" ]]; then
         info "Deploying profile: ${PROFILE}"
-        "${AETHERIUM_BIN}" deploy "${PROFILE}" || warn "Deploy had errors — check: aetherium status"
+        "${MSTPISTATION_BIN}" deploy "${PROFILE}" || warn "Deploy had errors — check: mstpistation status"
     fi
 
     # On procd/OpenWrt: convert systemd .service files to init.d scripts
     bash "${SCRIPT_DIR}/installer/service-compat.sh" 2>/dev/null || true
 
-    systemctl start aetherium-agent.service 2>/dev/null || true
+    systemctl start mstpistation-agent.service 2>/dev/null || true
     print_summary
 }
 

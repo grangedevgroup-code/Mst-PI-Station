@@ -1,16 +1,15 @@
-# Aetherium Node Configuration
-# Copy to /etc/aetherium/aetherium.yaml and edit for your node.
-# Apply changes: sudo aetherium deploy <profile>
-# Reference:     https://aetherium.io/docs/config-reference
+# Mst-PI-Station Node Configuration
+# Copy to /etc/mstpistation/mstpistation.yaml and edit for your node.
+# Apply changes: sudo mstpistation deploy <profile>
 
 # ── Node Identity ──────────────────────────────────────────────────────────────
 node:
-  name: "aetherium-node"          # unique name for this node
+  name: "mstpistation-node"          # unique name for this node
   profile: relay                  # relay|field-node|hotspot|mesh-hub|lte-gateway|emergency|solar-relay|local-services
   location: ""                    # optional: "Grid 4-7", "Hilltop Alpha", etc.
 
 # ── Network Interfaces ────────────────────────────────────────────────────────
-# Use "auto" to let Aetherium pick the best interface based on detected hardware.
+# Use "auto" to let Mst-PI-Station pick the best interface based on detected hardware.
 # Or specify explicitly: "wlan0", "wlan1", "eth0", "usb0"
 network:
   ap_interface: auto              # Wi-Fi interface for the hotspot AP
@@ -22,7 +21,7 @@ network:
 # ── Wi-Fi Hotspot ─────────────────────────────────────────────────────────────
 hotspot:
   enabled: true
-  ssid: "Aetherium"               # your network name
+  ssid: "Mst-PI-Station"               # your network name
   channel: 6                      # 1,6,11 for 2.4GHz / 36,40,44,149+ for 5GHz
   band: "2.4GHz"                  # "2.4GHz" or "5GHz"
   password: ""                    # empty = open network (recommended for field use)
@@ -85,7 +84,7 @@ aprs:
   rx_only: true                   # true = receive only (no license needed)
                                   # false = transmit APRS beacons (requires ham license)
   symbol: "/["                    # APRS symbol: /[ = laptop, /# = digipeater
-  comment: "Aetherium Mesh Node"
+  comment: "Mst-PI-Station Mesh Node"
   path: "WIDE1-1,WIDE2-1"
 
 # ── SDR ───────────────────────────────────────────────────────────────────────
@@ -97,7 +96,7 @@ sdr:
 
 # ── Matrix Conduit ────────────────────────────────────────────────────────────
 matrix:
-  server_name: "aetherium.local"  # Matrix homeserver name
+  server_name: "mstpistation.local"  # Matrix homeserver name
   allow_registration: true        # allow new users to register
 
 # ── Tailscale ─────────────────────────────────────────────────────────────────

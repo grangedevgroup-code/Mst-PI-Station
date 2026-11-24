@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
-source /etc/aetherium/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
+source /etc/mstpistation/distro.env 2>/dev/null || DISTRO_FAMILY="debian"
 
 log() { echo "[rnode] $*"; }
 
@@ -22,8 +22,8 @@ fi
 usermod -aG dialout reticulum 2>/dev/null || true
 
 # udev rules for common RNode-compatible devices
-cat > /etc/udev/rules.d/99-aetherium-rnode.rules << 'UDEV'
-# Aetherium RNode / LoRa interface rules
+cat > /etc/udev/rules.d/99-mstpistation-rnode.rules << 'UDEV'
+# Mst-PI-Station RNode / LoRa interface rules
 
 # CH340 USB-Serial (many RNode devices)
 SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d4", \

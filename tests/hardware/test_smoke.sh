@@ -15,28 +15,28 @@ check() {
     fi
 }
 
-echo "=== Aetherium Smoke Tests ==="
+echo "=== Mst-PI-Station Smoke Tests ==="
 echo ""
 echo "--- CLI ---"
-check "aetherium binary exists" "command -v aetherium"
-check "aetherium --version" "aetherium --version"
+check "mstpistation binary exists" "command -v mstpistation"
+check "mstpistation --version" "mstpistation --version"
 
 echo ""
 echo "--- Python stack ---"
-check "RNS importable" "/opt/aetherium/venv/bin/python3 -c 'import RNS'"
-check "LXMF importable" "/opt/aetherium/venv/bin/python3 -c 'import LXMF'"
-check "jinja2 importable" "/opt/aetherium/venv/bin/python3 -c 'import jinja2'"
-check "fastapi importable" "/opt/aetherium/venv/bin/python3 -c 'import fastapi'"
+check "RNS importable" "/opt/mstpistation/venv/bin/python3 -c 'import RNS'"
+check "LXMF importable" "/opt/mstpistation/venv/bin/python3 -c 'import LXMF'"
+check "jinja2 importable" "/opt/mstpistation/venv/bin/python3 -c 'import jinja2'"
+check "fastapi importable" "/opt/mstpistation/venv/bin/python3 -c 'import fastapi'"
 
 echo ""
 echo "--- Configs ---"
-check "/etc/aetherium/aetherium.yaml exists" "test -f /etc/aetherium/aetherium.yaml"
-check "/etc/aetherium/hardware.yaml exists" "test -f /etc/aetherium/hardware.yaml"
+check "/etc/mstpistation/mstpistation.yaml exists" "test -f /etc/mstpistation/mstpistation.yaml"
+check "/etc/mstpistation/hardware.yaml exists" "test -f /etc/mstpistation/hardware.yaml"
 
 echo ""
 echo "--- Services ---"
 check "systemd available" "command -v systemctl"
-check "aetherium-agent service file exists" "test -f /etc/systemd/system/aetherium-agent.service"
+check "mstpistation-agent service file exists" "test -f /etc/systemd/system/mstpistation-agent.service"
 
 echo ""
 echo "--- Network ---"

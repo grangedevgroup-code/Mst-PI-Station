@@ -1,34 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
 
 log() { echo "[emergency] $*"; }
 
 # No extra deps — uses LXMF which is already installed
-mkdir -p /etc/aetherium/emergency /var/log/aetherium/emergency
+mkdir -p /etc/mstpistation/emergency /var/log/mstpistation/emergency
 
 # Install broadcast daemon
-install -m 755 "${AETHERIUM_DIR}/modules/emergency/broadcast.py" \
-    "${AETHERIUM_DIR}/bin/emergency-broadcast" 2>/dev/null || \
-cp "${AETHERIUM_DIR}/modules/emergency/broadcast.py" \
-    "${AETHERIUM_DIR}/bin/emergency-broadcast" && \
-chmod +x "${AETHERIUM_DIR}/bin/emergency-broadcast"
+install -m 755 "${MSTPISTATION_DIR}/modules/emergency/broadcast.py" \
+    "${MSTPISTATION_DIR}/bin/emergency-broadcast" 2>/dev/null || \
+cp "${MSTPISTATION_DIR}/modules/emergency/broadcast.py" \
+    "${MSTPISTATION_DIR}/bin/emergency-broadcast" && \
+chmod +x "${MSTPISTATION_DIR}/bin/emergency-broadcast"
 
 # Systemd listener service (receives alerts and logs/displays them)
-cat > /etc/systemd/system/aetherium-emergency.service << SVC
+cat > /etc/systemd/system/mstpistation-emergency.service << SVC
 [Unit]
-Description=Aetherium Emergency Alert Listener
-After=network.target reticulum.service aetherium-lxmf.service
+Description=Mst-PI-Station Emergency Alert Listener
+After=network.target reticulum.service mstpistation-lxmf.service
 Requires=reticulum.service
 
 [Service]
 Type=simple
-User=aetherium
-ExecStart=${VENV}/bin/python3 ${AETHERIUM_DIR}/modules/emergency/listener.py
+User=mstpistation
+ExecStart=${VENV}/bin/python3 ${MSTPISTATION_DIR}/modules/emergency/listener.py
 Restart=on-failure
 RestartSec=5
-Environment=AETHERIUM_DIR=${AETHERIUM_DIR}
+Environment=MSTPISTATION_DIR=${MSTPISTATION_DIR}
 StandardOutput=journal
 StandardError=journal
 
@@ -37,6 +37,6 @@ WantedBy=multi-user.target
 SVC
 
 systemctl daemon-reload
-systemctl enable aetherium-emergency 2>/dev/null || true
+systemctl enable mstpistation-emergency 2>/dev/null || true
 log "Emergency alert module installed"
-log "Send alert: aetherium emergency send 'your message'"
+log "Send alert: mstpistation emergency send 'your message'"

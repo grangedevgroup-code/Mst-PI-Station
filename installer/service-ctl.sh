@@ -5,7 +5,7 @@
 ACTION="$1"
 SERVICE="$2"
 
-[[ -f /etc/aetherium/distro.env ]] && source /etc/aetherium/distro.env
+[[ -f /etc/mstpistation/distro.env ]] && source /etc/mstpistation/distro.env
 
 case "${INIT_SYSTEM:-systemd}" in
     systemd)

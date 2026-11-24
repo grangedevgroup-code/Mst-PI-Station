@@ -7,7 +7,7 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9100']
 
-  - job_name: 'aetherium'
+  - job_name: 'mstpistation'
     static_configs:
       - targets: ['localhost:9200']
     metrics_path: /metrics

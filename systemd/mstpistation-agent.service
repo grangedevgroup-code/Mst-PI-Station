@@ -1,0 +1,29 @@
+[Unit]
+Description=Mst-PI-Station Agent — Node Health Monitor and Watchdog
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/mstpistation/venv/bin/python3 /opt/mstpistation/core/agent.py
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=5
+
+# Runtime dirs
+RuntimeDirectory=mstpistation
+LogsDirectory=mstpistation
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mstpistation-agent
+
+# Security
+NoNewPrivileges=false
+ProtectSystem=false
+ReadWritePaths=/etc/mstpistation /var/lib/mstpistation /var/log/mstpistation /var/run/mstpistation
+
+[Install]
+WantedBy=multi-user.target

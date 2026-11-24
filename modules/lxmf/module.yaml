@@ -2,7 +2,7 @@ name: lxmf
 version: "0.9.6"
 description: "LXMF — Lightweight Extensible Messaging Format over Reticulum"
 type: native
-service: aetherium-lxmf
+service: mstpistation-lxmf
 binary: lxmd
 requires_hardware: []
 depends: [reticulum]

@@ -10,32 +10,32 @@ CPU_MAX_FREQ="${CPU_MAX_FREQ:-}"      # e.g. 1200000 for 1.2GHz cap
 
 log() { echo "[power/configure] $*"; }
 
-# Load from aetherium.yaml
-if [[ -f /etc/aetherium/aetherium.yaml ]]; then
+# Load from mstpistation.yaml
+if [[ -f /etc/mstpistation/mstpistation.yaml ]]; then
     POWER_MODE=$(python3 -c "
 import yaml
-cfg = yaml.safe_load(open('/etc/aetherium/aetherium.yaml'))
+cfg = yaml.safe_load(open('/etc/mstpistation/mstpistation.yaml'))
 print(cfg.get('power', {}).get('mode', 'balanced'))
 " 2>/dev/null || echo "balanced")
     DISABLE_HDMI=$(python3 -c "
 import yaml
-cfg = yaml.safe_load(open('/etc/aetherium/aetherium.yaml'))
+cfg = yaml.safe_load(open('/etc/mstpistation/mstpistation.yaml'))
 print('1' if cfg.get('power', {}).get('disable_hdmi', False) else '0')
 " 2>/dev/null || echo "0")
     DISABLE_LEDS=$(python3 -c "
 import yaml
-cfg = yaml.safe_load(open('/etc/aetherium/aetherium.yaml'))
+cfg = yaml.safe_load(open('/etc/mstpistation/mstpistation.yaml'))
 print('1' if cfg.get('power', {}).get('disable_leds', False) else '0')
 " 2>/dev/null || echo "0")
     DISABLE_BLUETOOTH=$(python3 -c "
 import yaml
-cfg = yaml.safe_load(open('/etc/aetherium/aetherium.yaml'))
+cfg = yaml.safe_load(open('/etc/mstpistation/mstpistation.yaml'))
 print('1' if cfg.get('power', {}).get('disable_bluetooth', False) else '0')
 " 2>/dev/null || echo "0")
 fi
 
 # Write apply script (called at boot by systemd service)
-cat > /etc/aetherium/power/apply-power-profile.sh << SCRIPT
+cat > /etc/mstpistation/power/apply-power-profile.sh << SCRIPT
 #!/usr/bin/env bash
 RESTORE="\${1:-}"
 log() { echo "[power] \$*"; }
@@ -103,10 +103,10 @@ BT
 
 log "Power profile applied: ${POWER_MODE}"
 SCRIPT
-chmod +x /etc/aetherium/power/apply-power-profile.sh
+chmod +x /etc/mstpistation/power/apply-power-profile.sh
 
-systemctl enable aetherium-power 2>/dev/null || true
-systemctl restart aetherium-power || true
+systemctl enable mstpistation-power 2>/dev/null || true
+systemctl restart mstpistation-power || true
 
 log "Power mode: ${POWER_MODE}"
 [[ "${DISABLE_HDMI}" == "1" ]]      && log "HDMI: disabled"

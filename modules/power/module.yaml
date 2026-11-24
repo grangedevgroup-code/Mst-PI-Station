@@ -2,7 +2,7 @@ name: power
 version: "system"
 description: "Power management — CPU governor, HDMI/LED/BT disable, thermal throttling for solar/battery"
 type: native
-service: aetherium-power
+service: mstpistation-power
 binary: cpufreq-set
 requires_hardware: []
 resource_budget:

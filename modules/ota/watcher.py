@@ -11,11 +11,11 @@ import subprocess
 import shutil
 import glob
 
-AETHERIUM_DIR = os.environ.get("AETHERIUM_DIR", "/opt/aetherium")
-INCOMING_DIR = "/var/lib/aetherium/ota/incoming"
-APPLIED_DIR = "/var/lib/aetherium/ota/applied"
-OTA_LOG = "/var/log/aetherium/ota/updates.log"
-KEYRING = "/etc/aetherium/ota/trusted-keys.gpg"
+MSTPISTATION_DIR = os.environ.get("MSTPISTATION_DIR", "/opt/mstpistation")
+INCOMING_DIR = "/var/lib/mstpistation/ota/incoming"
+APPLIED_DIR = "/var/lib/mstpistation/ota/applied"
+OTA_LOG = "/var/log/mstpistation/ota/updates.log"
+KEYRING = "/etc/mstpistation/ota/trusted-keys.gpg"
 
 logging.basicConfig(level=logging.INFO, format="[ota] %(message)s")
 LOG = logging.getLogger("ota")
@@ -47,8 +47,8 @@ def verify_signature(bundle_path: str) -> bool:
 
 
 def apply_bundle(bundle_path: str) -> bool:
-    """Extract and apply an Aetherium update bundle (.aeth-update = tar.gz)."""
-    tmp_dir = f"/tmp/aetherium-ota-{int(time.time())}"
+    """Extract and apply an Mst-PI-Station update bundle (.aeth-update = tar.gz)."""
+    tmp_dir = f"/tmp/mstpistation-ota-{int(time.time())}"
     try:
         os.makedirs(tmp_dir, exist_ok=True)
         with tarfile.open(bundle_path, "r:gz") as tar:
@@ -72,7 +72,7 @@ def apply_bundle(bundle_path: str) -> bool:
             os.chmod(install_script, 0o755)
             result = subprocess.run(
                 ["bash", install_script],
-                env={**os.environ, "AETHERIUM_DIR": AETHERIUM_DIR,
+                env={**os.environ, "MSTPISTATION_DIR": MSTPISTATION_DIR,
                      "UPDATE_VERSION": version},
                 timeout=300,
             )
@@ -98,7 +98,7 @@ def apply_bundle(bundle_path: str) -> bool:
 
 
 def get_current_version() -> str:
-    version_file = os.path.join(AETHERIUM_DIR, "VERSION")
+    version_file = os.path.join(MSTPISTATION_DIR, "VERSION")
     if os.path.exists(version_file):
         return open(version_file).read().strip()
     return "0.0.0"

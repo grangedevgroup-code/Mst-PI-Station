@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-AETHERIUM_DIR="${AETHERIUM_DIR:-/opt/aetherium}"
-VENV="${AETHERIUM_DIR}/venv"
+MSTPISTATION_DIR="${MSTPISTATION_DIR:-/opt/mstpistation}"
+VENV="${MSTPISTATION_DIR}/venv"
 
 log() { echo "[meshtastic] $*"; }
 
@@ -13,7 +13,7 @@ log() { echo "[meshtastic] $*"; }
 "${VENV}/bin/pip" install --quiet pyserial 2>/dev/null || true
 
 # udev rules for Meshtastic devices
-cat > /etc/udev/rules.d/99-aetherium-meshtastic.rules << 'UDEV'
+cat > /etc/udev/rules.d/99-mstpistation-meshtastic.rules << 'UDEV'
 # Meshtastic device rules
 
 # CP2102 (TTGO T-Beam, Heltec, WisMesh Pocket)
@@ -41,25 +41,25 @@ udevadm trigger 2>/dev/null || true
 # Add reticulum user to dialout
 usermod -aG dialout reticulum 2>/dev/null || true
 
-mkdir -p /var/lib/aetherium/meshtastic
-chown reticulum:reticulum /var/lib/aetherium/meshtastic
+mkdir -p /var/lib/mstpistation/meshtastic
+chown reticulum:reticulum /var/lib/mstpistation/meshtastic
 
 # Install the bridge service
-cat > /etc/systemd/system/aetherium-meshtastic.service << SVC
+cat > /etc/systemd/system/mstpistation-meshtastic.service << SVC
 [Unit]
-Description=Aetherium Meshtastic Bridge
-After=reticulum.service aetherium-lxmf.service
+Description=Mst-PI-Station Meshtastic Bridge
+After=reticulum.service mstpistation-lxmf.service
 Requires=reticulum.service
 
 [Service]
 Type=simple
 User=reticulum
-ExecStart=${VENV}/bin/python3 ${AETHERIUM_DIR}/modules/meshtastic/bridge.py
+ExecStart=${VENV}/bin/python3 ${MSTPISTATION_DIR}/modules/meshtastic/bridge.py
 Restart=on-failure
 RestartSec=20
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=aetherium-meshtastic
+SyslogIdentifier=mstpistation-meshtastic
 
 [Install]
 WantedBy=multi-user.target
@@ -71,5 +71,5 @@ log "Meshtastic module installed"
 if ls /dev/meshtastic* &>/dev/null 2>&1; then
     log "Meshtastic device found: $(ls /dev/meshtastic*)"
 else
-    log "No Meshtastic device detected. Connect device and run: aetherium module enable meshtastic"
+    log "No Meshtastic device detected. Connect device and run: mstpistation module enable meshtastic"
 fi
