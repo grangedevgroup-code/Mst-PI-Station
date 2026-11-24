@@ -1,5 +1,3 @@
-> **Proprietary and confidential.** Copyright (c) 2026 Grange Dev Group. All rights reserved. This is not open source: you may not use, copy, build, modify, share, recreate or re-implement this code, or use it to train or prompt AI systems, even if you can see it. See [LICENSE](LICENSE).
-
 # Mst-PI-Station
 
 **Resilient Mesh Communications Stack for Field Deployments**
@@ -127,17 +125,17 @@ Supported architectures: **aarch64, armv7l, x86_64**
 
 Mst-PI-Station integrates these open-source projects:
 
-- [Reticulum](https://reticulum.network), encrypted mesh transport
-- [LXMF](https://github.com/markqvist/LXMF), messaging over Reticulum
-- [NomadNet](https://github.com/markqvist/NomadNet), mesh node pages
-- [Sideband](https://github.com/markqvist/Sideband), mobile Reticulum client
-- [batman-adv](https://www.open-mesh.org/projects/batman-adv), L2 mesh
-- [RNode Firmware](https://github.com/markqvist/RNode_Firmware), LoRa firmware
-- [Meshtastic](https://meshtastic.org), LoRa mesh (standalone)
-- [OpenWrt](https://openwrt.org), router integration
+- [Reticulum](https://reticulum.network): encrypted mesh transport
+- [LXMF](https://github.com/markqvist/LXMF): messaging over Reticulum
+- [NomadNet](https://github.com/markqvist/NomadNet): mesh node pages
+- [Sideband](https://github.com/markqvist/Sideband): mobile Reticulum client
+- [batman-adv](https://www.open-mesh.org/projects/batman-adv): L2 mesh
+- [RNode Firmware](https://github.com/markqvist/RNode_Firmware): LoRa firmware
+- [Meshtastic](https://meshtastic.org): LoRa mesh (standalone)
+- [OpenWrt](https://openwrt.org): router integration
 
 ---
 
 ## License
 
-MIT, See LICENSE file.
+MIT. See [LICENSE](LICENSE).
